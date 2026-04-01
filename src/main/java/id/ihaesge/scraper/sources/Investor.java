@@ -43,9 +43,12 @@ public class Investor extends BaseScraper implements NewsSource {
 
             	if (!seen.contains(href)) {
             		seen.add(href);
-            		list.add(new ArticleItem(title, href, getSourceName()));
 
-            		if (scrapLimit > 0 && list.size() >= scrapLimit) break;
+	        		if (scrapLimit > 0 && list.size() >= scrapLimit) {
+	        			break;
+	        		} else {
+	        			list.add(new ArticleItem(title, href, getSourceName()));	        			
+	        		}
             	}
             }
         }
@@ -113,7 +116,7 @@ public class Investor extends BaseScraper implements NewsSource {
             for (Element p : div.select("p")) {
             	String clean = cleanText(p.text());
                 if (clean != null &&
-                        !clean.contains("JAKARTA, investor.id ") &&  
+//                        !clean.contains("JAKARTA, investor.id ") &&  
                     	!clean.contains("Baca Berita Lainnya") &&  
                     	!clean.contains("Follow Channel") &&  
                     	!clean.contains("Baca Juga:") &&  
@@ -123,7 +126,7 @@ public class Investor extends BaseScraper implements NewsSource {
                 }
             }
 
-            articleContent = new ArticleContent(title, ldt, content.toString(), url, getSourceName());
+            articleContent = new ArticleContent(title, ldt, removePrefixSuffix(content.toString().trim()), url, getSourceName());
         } catch (Exception e) {
         	e.printStackTrace();
         }
@@ -168,5 +171,31 @@ public class Investor extends BaseScraper implements NewsSource {
     private String toAllPageUrl(String url) {
         if (url.endsWith("/all")) return url;
         return url + "/all";
+    }
+
+    private String removePrefixSuffix(String str) {
+    	//be careful: – is different -
+    	//be careful: \n at the end, dont forget to trim()
+    	String[] PREFIX = {"JAKARTA, investor.id -", "JAKARTA, investor.id - ", "JAKARTA, investor.id- ", "JAKARTA, investor.id-", "JAKARTA, investor.id – ", "JAKARTA, investor.id –", "JAKARTA, investor.id– ", "JAKARTA, investor.id–"};	//must in order
+    	String[] SUFFIX = {};
+    	str.trim();
+
+    	if (str != null && str.length() > 0) {
+        	for (String s : PREFIX) {
+    	    	if (str.startsWith(s)) {
+    	    		str = str.substring(s.length()).trim();
+//    	    		break;	//dont break because maybe have multiple prefixes
+    	    	}
+        	}
+
+        	for (String s : SUFFIX) {
+    	    	if (str.endsWith(s)) {
+	    			str = str.substring(0, str.length() - s.length()).trim();
+    	    		break;	//break because maybe have only 1 suffix
+    	    	}
+        	}
+    	}
+
+    	return str;
     }
 }

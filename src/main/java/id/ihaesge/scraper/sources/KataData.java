@@ -9,15 +9,16 @@ import java.util.regex.*;
 
 import org.jsoup.*;
 import org.jsoup.nodes.*;
+import org.jsoup.parser.*;
 
 import com.microsoft.playwright.*;
 
-public class Bisnis extends BaseScraper implements NewsSource {
-	private final String BASE_URL = "https://www.bisnis.com/index?categoryId=194";
+public class KataData extends BaseScraper implements NewsSource {
+	private final String BASE_URL = "https://katadata.co.id/finansial/bursa/";
 
     @Override
     public String getSourceName() {
-        return "BISNIS";
+        return "KATADATA";
     }
 
     @Override
@@ -27,28 +28,26 @@ public class Bisnis extends BaseScraper implements NewsSource {
         List<ArticleItem> list = new ArrayList<>();
         Set<String> seen = new HashSet<>();
 
-        //<div class="artContent">
-        for (Element div : doc.select("div.artContent")) {
-        	Element el = div.selectFirst("a[href]");
+        //<div class="latest-news result">
+        Element div = doc.selectFirst("div.latest-news.result");
+        for (Element el : div.select("a")) {
             String href = el.attr("href");
             String title = cleanText(el.text());
 
-            // Bisnis pattern
-            //<a href="https://market.bisnis.com/read/20260329/192/1962766/menilik-postur-keuangan-di-balik-rekor-laba-hartadinata-hrta-sepanjang-2025" class="artLink">
-            if (href.contains("/read/")) {
+            if (href.contains("/finansial/bursa/")) {
             	if (!href.startsWith("http")) {
-            		href = "https://market.bisnis.com" + href;
+            		href = "https://katadata.co.id" + href;
             	}
 
-                if (!seen.contains(href)) {
-                    seen.add(href);
+            	if (!seen.contains(href)) {
+            		seen.add(href);
 
 	        		if (scrapLimit > 0 && list.size() >= scrapLimit) {
 	        			break;
 	        		} else {
 	        			list.add(new ArticleItem(title, href, getSourceName()));	        			
 	        		}
-                }
+            	}
             }
         }
 
@@ -91,20 +90,20 @@ public class Bisnis extends BaseScraper implements NewsSource {
         try {
         	//no need to remove noise because extraction only on specific part (selectFirst)
 //        	removeNoise(doc);
-//        	removeNoiseBisnis(doc);
+//        	removeNoiseKataData(doc);
 
-        	String title = cleanText(doc.selectFirst("title").text());
+        	//<h1 class="detail-title mb-4">
+        	String title = cleanText(doc.selectFirst("h1.detail-title.mb-4").text());
             LocalDateTime ldt = extractPublishDate(doc);
 
             StringBuilder content = new StringBuilder();
-            //<article class="detailsContent force-17 mt40">
-            Element div = doc.selectFirst("article.detailsContent");
+            //<div class="detail-body mb-4">
+            Element div = doc.selectFirst("div.detail-body.mb-4");
             for (Element p : div.select("p")) {
             	String clean = cleanText(p.text());
                 if (clean != null &&
-//                		!clean.contains("Bisnis.com, ") && 
-                		!clean.contains("Baca Juga")) {
-                    content.append(clean);
+                    !clean.contains("Dapatkan pengalaman membaca")) {
+                	content.append(clean);
                     if (!clean.isBlank()) content.append("\n");
                 }
             }
@@ -117,13 +116,13 @@ public class Bisnis extends BaseScraper implements NewsSource {
         return articleContent;
     }
 
-    //<meta name="publishdate" content="2026/03/25 15:11:47" />
+    //<meta property="article:published_time" content="2026-03-31 17:13:00">
     private LocalDateTime extractPublishDate(Document doc) {
-        Element meta = doc.selectFirst("meta[name=publishdate]");
+        Element meta = doc.selectFirst("meta[property=article:published_time]");
         if (meta != null) {
             String publishDate = cleanText(meta.attr("content"));
 
-        	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss", Locale.of("id", "ID"));
+        	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss", Locale.of("id", "ID"));
         	LocalDateTime ldt = LocalDateTime.parse(publishDate, formatter);
 
         	return ldt;
@@ -132,9 +131,9 @@ public class Bisnis extends BaseScraper implements NewsSource {
         return null;
     }
 
-    private void removeNoiseBisnis(Document doc) {
+    private void removeNoiseKataData(Document doc) {
         String[] selectors = {
-                ".skyscrapper", ".bisnisaiHeader", ".bisnisaiBody", ".bisnisaiFooter", ".baca-juga-box", ".detailsAuthor", ".billboardWrapper"
+                ".content-index-header", ".info-author", ".article-header-img", ".news-container.other-emiten-news-wrapper", ".recommendation-news-text"
         };
 
         for (String sel : selectors) {
@@ -145,7 +144,7 @@ public class Bisnis extends BaseScraper implements NewsSource {
     private String removePrefixSuffix(String str) {
     	//be careful: – is different -
     	//be careful: \n at the end, dont forget to trim()
-    	String[] PREFIX = {"Bisnis.com, JAKARTA —", "Bisnis.com, JAKARTA—", "Bisnis.com,JAKARTA —", "Bisnis.com,JAKARTA—", "Bisnis.com , JAKARTA —", "Bisnis.com ,JAKARTA —", "Bisnis.com ,JAKARTA—"};	//must in order
+    	String[] PREFIX = {};	//must in order
     	String[] SUFFIX = {};
     	str.trim();
 

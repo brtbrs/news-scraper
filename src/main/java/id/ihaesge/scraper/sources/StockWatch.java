@@ -9,46 +9,84 @@ import java.util.regex.*;
 
 import org.jsoup.*;
 import org.jsoup.nodes.*;
+import org.jsoup.parser.*;
 
 import com.microsoft.playwright.*;
 
-public class Bisnis extends BaseScraper implements NewsSource {
-	private final String BASE_URL = "https://www.bisnis.com/index?categoryId=194";
+public class StockWatch extends BaseScraper implements NewsSource {
+	private final String BASE_URL = "https://stockwatch.id/";
+	private final String BASE_URL_FINANSIAL = BASE_URL + "category/finansial/";
+	private final String BASE_URL_MARKET = BASE_URL + "category/market/";
 
     @Override
     public String getSourceName() {
-        return "BISNIS";
+        return "STOCKWATCH";
     }
 
     @Override
     public List<ArticleItem> getArticleList(int scrapLimit) throws Exception {
-        Document doc = Jsoup.connect(BASE_URL).get();
+        Document doc = Jsoup.connect(BASE_URL_MARKET).get();
 
         List<ArticleItem> list = new ArrayList<>();
         Set<String> seen = new HashSet<>();
 
-        //<div class="artContent">
-        for (Element div : doc.select("div.artContent")) {
-        	Element el = div.selectFirst("a[href]");
+        //market
+        //<div id=tdi_91 class="td_block_inner">
+        Element div = doc.selectFirst("div#tdi_91");
+        for (Element el : div.select("a")) {
             String href = el.attr("href");
-            String title = cleanText(el.text());
+            String title = cleanText(el.attr("title"));
 
-            // Bisnis pattern
-            //<a href="https://market.bisnis.com/read/20260329/192/1962766/menilik-postur-keuangan-di-balik-rekor-laba-hartadinata-hrta-sepanjang-2025" class="artLink">
-            if (href.contains("/read/")) {
-            	if (!href.startsWith("http")) {
-            		href = "https://market.bisnis.com" + href;
-            	}
-
-                if (!seen.contains(href)) {
-                    seen.add(href);
+            if (href.contains(BASE_URL) && !href.startsWith(BASE_URL_MARKET) && !href.startsWith(BASE_URL + "author/")) {
+	        	if (!seen.contains(href)) {
+	        		seen.add(href);
 
 	        		if (scrapLimit > 0 && list.size() >= scrapLimit) {
 	        			break;
 	        		} else {
 	        			list.add(new ArticleItem(title, href, getSourceName()));	        			
 	        		}
-                }
+	        	}
+            }
+        }
+
+        //market
+        //<div id=tdi_97 class="td_block_inner tdb-block-inner td-fix-index">
+        div = doc.selectFirst("div#tdi_97");
+        for (Element el : div.select("a")) {
+            String href = el.attr("href");
+            String title = cleanText(el.attr("title"));
+
+            if (href.contains(BASE_URL) && !href.startsWith(BASE_URL_MARKET) && !href.startsWith(BASE_URL + "author/")) {
+	        	if (!seen.contains(href)) {
+	        		seen.add(href);
+
+	        		if (scrapLimit > 0 && list.size() >= scrapLimit) {
+	        			break;
+	        		} else {
+	        			list.add(new ArticleItem(title, href, getSourceName()));	        			
+	        		}
+	        	}
+            }
+        }
+
+        //finansial
+        //<div id=tdi_33 class="td_block_inner">
+        div = doc.selectFirst("div#tdi_33");
+        for (Element el : div.select("a")) {
+            String href = el.attr("href");
+            String title = cleanText(el.attr("title"));
+
+            if (href.contains(BASE_URL) && !href.startsWith(BASE_URL_FINANSIAL) && !href.startsWith(BASE_URL + "author/")) {
+	        	if (!seen.contains(href)) {
+	        		seen.add(href);
+
+	        		if (scrapLimit > 0 && list.size() >= scrapLimit) {
+	        			break;
+	        		} else {
+	        			list.add(new ArticleItem(title, href, getSourceName()));	        			
+	        		}
+	        	}
             }
         }
 
@@ -91,20 +129,18 @@ public class Bisnis extends BaseScraper implements NewsSource {
         try {
         	//no need to remove noise because extraction only on specific part (selectFirst)
 //        	removeNoise(doc);
-//        	removeNoiseBisnis(doc);
+//        	removeNoiseKataData(doc);
 
-        	String title = cleanText(doc.selectFirst("title").text());
+        	String title = cleanText(doc.selectFirst("meta[property=og:title]").attr("content"));
             LocalDateTime ldt = extractPublishDate(doc);
 
             StringBuilder content = new StringBuilder();
-            //<article class="detailsContent force-17 mt40">
-            Element div = doc.selectFirst("article.detailsContent");
-            for (Element p : div.select("p")) {
+            //<p style="text-align: justify">
+            for (Element p : doc.select("p[style*=justify]")) {
             	String clean = cleanText(p.text());
                 if (clean != null &&
-//                		!clean.contains("Bisnis.com, ") && 
-                		!clean.contains("Baca Juga")) {
-                    content.append(clean);
+                        !clean.contains("Disclaimer: ")) {
+                	content.append(clean);
                     if (!clean.isBlank()) content.append("\n");
                 }
             }
@@ -117,13 +153,13 @@ public class Bisnis extends BaseScraper implements NewsSource {
         return articleContent;
     }
 
-    //<meta name="publishdate" content="2026/03/25 15:11:47" />
+    //<meta property="og:updated_time" content="2026-03-31T21:32:13+07:00">
     private LocalDateTime extractPublishDate(Document doc) {
-        Element meta = doc.selectFirst("meta[name=publishdate]");
+        Element meta = doc.selectFirst("meta[property=og:updated_time]");
         if (meta != null) {
             String publishDate = cleanText(meta.attr("content"));
 
-        	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss", Locale.of("id", "ID"));
+        	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.of("id", "ID"));
         	LocalDateTime ldt = LocalDateTime.parse(publishDate, formatter);
 
         	return ldt;
@@ -132,9 +168,9 @@ public class Bisnis extends BaseScraper implements NewsSource {
         return null;
     }
 
-    private void removeNoiseBisnis(Document doc) {
+    private void removeNoiseStockWatch(Document doc) {
         String[] selectors = {
-                ".skyscrapper", ".bisnisaiHeader", ".bisnisaiBody", ".bisnisaiFooter", ".baca-juga-box", ".detailsAuthor", ".billboardWrapper"
+//                ""
         };
 
         for (String sel : selectors) {
@@ -145,8 +181,8 @@ public class Bisnis extends BaseScraper implements NewsSource {
     private String removePrefixSuffix(String str) {
     	//be careful: – is different -
     	//be careful: \n at the end, dont forget to trim()
-    	String[] PREFIX = {"Bisnis.com, JAKARTA —", "Bisnis.com, JAKARTA—", "Bisnis.com,JAKARTA —", "Bisnis.com,JAKARTA—", "Bisnis.com , JAKARTA —", "Bisnis.com ,JAKARTA —", "Bisnis.com ,JAKARTA—"};	//must in order
-    	String[] SUFFIX = {};
+    	String[] PREFIX = {"STOCKWATCH.ID (JAKARTA) – ", "STOCKWATCH.ID (JAKARTA)– ", "STOCKWATCH.ID (JAKARTA) –", "STOCKWATCH.ID (JAKARTA)–"};	//must in order
+    	String[] SUFFIX = {"(konrad)"};
     	str.trim();
 
     	if (str != null && str.length() > 0) {

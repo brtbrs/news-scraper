@@ -40,20 +40,13 @@ public class EmitenNews extends BaseScraper implements NewsSource {
 
             	if (!seen.contains(href)) {
             		seen.add(href);
-            		list.add(new ArticleItem(title, href, getSourceName()));
 
-            		if (scrapLimit > 0 && list.size() >= scrapLimit) break;
+            		if (scrapLimit > 0 && list.size() >= scrapLimit) {
+	        			break;
+	        		} else {
+	        			list.add(new ArticleItem(title, href, getSourceName()));	        			
+	        		}
             	}
-            }
-
-            if (href.contains("/news/")) {
-                if (!seen.contains(href)) {
-                    seen.add(href);
-
-                    list.add(new ArticleItem(title, href, getSourceName()));
-
-                    if (scrapLimit > 0 && list.size() >= scrapLimit) break;
-                }
             }
         }
 
@@ -106,14 +99,13 @@ public class EmitenNews extends BaseScraper implements NewsSource {
             Element div = doc.selectFirst("div.article-body");
             for (Element p : div.select("p")) {
             	String clean = cleanText(p.text());
-                if (clean != null &&
-                    !clean.contains("EmitenNews.com ")) {
+                if (clean != null) {
                 	content.append(clean);
                     if (!clean.isBlank()) content.append("\n");
                 }
             }
 
-            articleContent = new ArticleContent(title, ldt, content.toString(), url, getSourceName());
+            articleContent = new ArticleContent(title, ldt, removePrefixSuffix(content.toString().trim()), url, getSourceName());
         } catch (Exception e) {
         	e.printStackTrace();
         }
@@ -145,5 +137,31 @@ public class EmitenNews extends BaseScraper implements NewsSource {
         for (String sel : selectors) {
             doc.select(sel).remove();
         }
+    }
+
+    private String removePrefixSuffix(String str) {
+    	//be careful: – is different -
+    	//be careful: \n at the end, dont forget to trim()
+    	String[] PREFIX = {"EmitenNews.com -", "EmitenNews.com - ", "EmitenNews.com- ", "EmitenNews.com-"};	//must in order
+    	String[] SUFFIX = {};
+    	str.trim();
+
+    	if (str != null && str.length() > 0) {
+        	for (String s : PREFIX) {
+    	    	if (str.startsWith(s)) {
+    	    		str = str.substring(s.length()).trim();
+//    	    		break;	//dont break because maybe have multiple prefixes
+    	    	}
+        	}
+
+        	for (String s : SUFFIX) {
+    	    	if (str.endsWith(s)) {
+	    			str = str.substring(0, str.length() - s.length()).trim();
+    	    		break;	//break because maybe have only 1 suffix
+    	    	}
+        	}
+    	}
+
+    	return str;
     }
 }

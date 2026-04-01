@@ -14,10 +14,13 @@ public class Main {
 	    engine.registerSource(new Bisnis());
 	    //engine.registerSource(new CNBC());
 		//engine.registerSource(new EmitenNews());
+		//engine.registerSource(new EmitenTrust());
 		//engine.registerSource(new Investor());
 		//engine.registerSource(new IPOTNews());
+	    //engine.registerSource(new KataData());
 	    //engine.registerSource(new Kontan());
 		//engine.registerSource(new Neraca());
+		//engine.registerSource(new StockWatch());
 	
 	    int scrapLimit = 2; // debug
 	

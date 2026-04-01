@@ -9,15 +9,16 @@ import java.util.regex.*;
 
 import org.jsoup.*;
 import org.jsoup.nodes.*;
+import org.jsoup.parser.*;
 
 import com.microsoft.playwright.*;
 
-public class Bisnis extends BaseScraper implements NewsSource {
-	private final String BASE_URL = "https://www.bisnis.com/index?categoryId=194";
+public class EmitenTrust extends BaseScraper implements NewsSource {
+	private final String BASE_URL = "https://emitentrust.com/category/stock-and-market/";
 
     @Override
     public String getSourceName() {
-        return "BISNIS";
+        return "EMITENTRUST";
     }
 
     @Override
@@ -27,30 +28,44 @@ public class Bisnis extends BaseScraper implements NewsSource {
         List<ArticleItem> list = new ArrayList<>();
         Set<String> seen = new HashSet<>();
 
-        //<div class="artContent">
-        for (Element div : doc.select("div.artContent")) {
-        	Element el = div.selectFirst("a[href]");
+        //<div id=tdi_74 class="td_block_inner">
+        Element div = doc.selectFirst("#tdi_74");
+        for (Element el : div.select("a")) {
             String href = el.attr("href");
             String title = cleanText(el.text());
 
-            // Bisnis pattern
-            //<a href="https://market.bisnis.com/read/20260329/192/1962766/menilik-postur-keuangan-di-balik-rekor-laba-hartadinata-hrta-sepanjang-2025" class="artLink">
-            if (href.contains("/read/")) {
-            	if (!href.startsWith("http")) {
-            		href = "https://market.bisnis.com" + href;
-            	}
-
-                if (!seen.contains(href)) {
-                    seen.add(href);
+            if (href.contains("https://emitentrust.com/") && !href.startsWith(BASE_URL) && !href.startsWith("https://emitentrust.com/author/")) {
+	        	if (!seen.contains(href)) {
+	        		seen.add(href);
 
 	        		if (scrapLimit > 0 && list.size() >= scrapLimit) {
 	        			break;
 	        		} else {
 	        			list.add(new ArticleItem(title, href, getSourceName()));	        			
 	        		}
-                }
+	        	}
             }
         }
+
+        //<div id=tdi_80 class="td_block_inner tdb-block-inner td-fix-index">
+        div = doc.selectFirst("#tdi_80");
+        for (Element el : div.select("a")) {
+            String href = el.attr("href");
+            String title = cleanText(el.text());
+
+            if (href.contains("https://emitentrust.com/") && !href.startsWith(BASE_URL) && !href.startsWith("https://emitentrust.com/author/")) {
+	        	if (!seen.contains(href)) {
+	        		seen.add(href);
+
+	        		if (scrapLimit > 0 && list.size() >= scrapLimit) {
+	        			break;
+	        		} else {
+	        			list.add(new ArticleItem(title, href, getSourceName()));	        			
+	        		}
+	        	}
+            }
+        }
+
 
         return list;
     }
@@ -91,20 +106,19 @@ public class Bisnis extends BaseScraper implements NewsSource {
         try {
         	//no need to remove noise because extraction only on specific part (selectFirst)
 //        	removeNoise(doc);
-//        	removeNoiseBisnis(doc);
+//        	removeNoiseKataData(doc);
 
-        	String title = cleanText(doc.selectFirst("title").text());
+        	//<meta property="og:title" content="Melejit 2.744%, Laba Bank Neo (BBYB) Capai Rp565M di 2025">
+        	String title = cleanText(doc.selectFirst("meta[property=og:title]").attr("content"));
             LocalDateTime ldt = extractPublishDate(doc);
 
             StringBuilder content = new StringBuilder();
-            //<article class="detailsContent force-17 mt40">
-            Element div = doc.selectFirst("article.detailsContent");
-            for (Element p : div.select("p")) {
+            for (Element p : doc.select("p")) {
             	String clean = cleanText(p.text());
-                if (clean != null &&
-//                		!clean.contains("Bisnis.com, ") && 
-                		!clean.contains("Baca Juga")) {
-                    content.append(clean);
+                if (clean != null && 
+//                    !clean.contains("Emitentrust.com ") && 
+                    !clean.contains("- EmitenTrust")) {
+                	content.append(clean);
                     if (!clean.isBlank()) content.append("\n");
                 }
             }
@@ -117,13 +131,13 @@ public class Bisnis extends BaseScraper implements NewsSource {
         return articleContent;
     }
 
-    //<meta name="publishdate" content="2026/03/25 15:11:47" />
+    //<meta property="og:updated_time" content="2026-03-31T21:32:13+07:00">
     private LocalDateTime extractPublishDate(Document doc) {
-        Element meta = doc.selectFirst("meta[name=publishdate]");
+        Element meta = doc.selectFirst("meta[property=og:updated_time]");
         if (meta != null) {
             String publishDate = cleanText(meta.attr("content"));
 
-        	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss", Locale.of("id", "ID"));
+        	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.of("id", "ID"));
         	LocalDateTime ldt = LocalDateTime.parse(publishDate, formatter);
 
         	return ldt;
@@ -132,9 +146,9 @@ public class Bisnis extends BaseScraper implements NewsSource {
         return null;
     }
 
-    private void removeNoiseBisnis(Document doc) {
+    private void removeNoiseEmitenTrust(Document doc) {
         String[] selectors = {
-                ".skyscrapper", ".bisnisaiHeader", ".bisnisaiBody", ".bisnisaiFooter", ".baca-juga-box", ".detailsAuthor", ".billboardWrapper"
+                ".content-index-header", ".info-author", ".article-header-img", ".news-container.other-emiten-news-wrapper", ".recommendation-news-text"
         };
 
         for (String sel : selectors) {
@@ -145,7 +159,7 @@ public class Bisnis extends BaseScraper implements NewsSource {
     private String removePrefixSuffix(String str) {
     	//be careful: – is different -
     	//be careful: \n at the end, dont forget to trim()
-    	String[] PREFIX = {"Bisnis.com, JAKARTA —", "Bisnis.com, JAKARTA—", "Bisnis.com,JAKARTA —", "Bisnis.com,JAKARTA—", "Bisnis.com , JAKARTA —", "Bisnis.com ,JAKARTA —", "Bisnis.com ,JAKARTA—"};	//must in order
+    	String[] PREFIX = {"Emitentrust.com"};	//must in order
     	String[] SUFFIX = {};
     	str.trim();
 
