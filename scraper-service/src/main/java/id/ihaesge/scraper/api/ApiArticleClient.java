@@ -25,7 +25,7 @@ public class ApiArticleClient {
 
     public void sendArticle(ArticleContent article) {
         ApiArticleRequest requestBody = new ApiArticleRequest(
-                article.source,
+                article.source == null ? null : article.source.trim(),
                 article.title,
                 article.content,
                 article.url,

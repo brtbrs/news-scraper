@@ -4,7 +4,7 @@
 -- 2) avoid reserved identifiers (user -> app_user)
 -- 3) use TEXT for long article content
 -- 4) add CHECK constraints for positive durations / playback speed
--- 5) index commonly queried FK columns
+-- 5) index commonly queried FK columns and timestamps
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
@@ -31,9 +31,9 @@ CREATE TABLE sector_industry (
 
 CREATE TABLE source (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(150) NOT NULL,
+    name VARCHAR(150) NOT NULL UNIQUE,
     url TEXT NOT NULL UNIQUE,
-    last_scrapped_at TIMESTAMPTZ,
+    last_scraped_at TIMESTAMPTZ,
     active BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -68,8 +68,9 @@ CREATE TABLE corporate_event (
     CONSTRAINT fk_corporate_event_type FOREIGN KEY (event_type) REFERENCES attribute (id) ON DELETE RESTRICT
 );
 
-CREATE TABLE news (
+CREATE TABLE content (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    type UUID NOT NULL,
     source UUID NOT NULL,
     url TEXT NOT NULL UNIQUE,
     original_title TEXT NOT NULL,
@@ -85,31 +86,32 @@ CREATE TABLE news (
     publish_date TIMESTAMPTZ,
     status UUID NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT fk_news_source FOREIGN KEY (source) REFERENCES source (id) ON DELETE CASCADE,
-    CONSTRAINT fk_news_sentiment FOREIGN KEY (sentiment) REFERENCES attribute (id) ON DELETE RESTRICT,
-    CONSTRAINT fk_news_duplicate FOREIGN KEY (duplicate) REFERENCES news (id) ON DELETE SET NULL,
-    CONSTRAINT fk_news_status FOREIGN KEY (status) REFERENCES attribute (id) ON DELETE RESTRICT
+    CONSTRAINT fk_content_type FOREIGN KEY (type) REFERENCES attribute (id) ON DELETE RESTRICT,
+    CONSTRAINT fk_content_source FOREIGN KEY (source) REFERENCES source (id) ON DELETE CASCADE,
+    CONSTRAINT fk_content_sentiment FOREIGN KEY (sentiment) REFERENCES attribute (id) ON DELETE RESTRICT,
+    CONSTRAINT fk_content_duplicate FOREIGN KEY (duplicate) REFERENCES content (id) ON DELETE SET NULL,
+    CONSTRAINT fk_content_status FOREIGN KEY (status) REFERENCES attribute (id) ON DELETE RESTRICT
 );
 
-CREATE TABLE news_stock (
+CREATE TABLE content_stock (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    news UUID NOT NULL,
+    content UUID NOT NULL,
     stock UUID NOT NULL,
-    CONSTRAINT fk_news_stock_news FOREIGN KEY (news) REFERENCES news (id) ON DELETE CASCADE,
-    CONSTRAINT fk_news_stock_stock FOREIGN KEY (stock) REFERENCES stock (id) ON DELETE CASCADE,
-    CONSTRAINT uq_news_stock UNIQUE (news, stock)
+    CONSTRAINT fk_content_stock_content FOREIGN KEY (content) REFERENCES content (id) ON DELETE CASCADE,
+    CONSTRAINT fk_content_stock_stock FOREIGN KEY (stock) REFERENCES stock (id) ON DELETE CASCADE,
+    CONSTRAINT uq_content_stock UNIQUE (content, stock)
 );
 
 CREATE TABLE audio (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    news UUID NOT NULL UNIQUE,
+    content UUID NOT NULL UNIQUE,
     url_id TEXT,
     url_en TEXT,
     duration_id SMALLINT,
     duration_en SMALLINT,
     status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT fk_audio_news FOREIGN KEY (news) REFERENCES news (id) ON DELETE CASCADE,
+    CONSTRAINT fk_audio_content FOREIGN KEY (content) REFERENCES content (id) ON DELETE CASCADE,
     CONSTRAINT ck_audio_duration_id_positive CHECK (duration_id IS NULL OR duration_id >= 0),
     CONSTRAINT ck_audio_duration_en_positive CHECK (duration_en IS NULL OR duration_en >= 0)
 );
@@ -146,13 +148,13 @@ CREATE TABLE activity_log (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
     activity_type UUID NOT NULL,
-    news UUID,
+    content UUID,
     audio UUID,
     activity_start TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     activity_end TIMESTAMPTZ,
     CONSTRAINT fk_activity_log_user FOREIGN KEY (user_id) REFERENCES app_user (id) ON DELETE CASCADE,
     CONSTRAINT fk_activity_log_activity_type FOREIGN KEY (activity_type) REFERENCES attribute (id) ON DELETE RESTRICT,
-    CONSTRAINT fk_activity_log_news FOREIGN KEY (news) REFERENCES news (id) ON DELETE CASCADE,
+    CONSTRAINT fk_activity_log_content FOREIGN KEY (content) REFERENCES content (id) ON DELETE CASCADE,
     CONSTRAINT fk_activity_log_audio FOREIGN KEY (audio) REFERENCES audio (id) ON DELETE CASCADE
 );
 
@@ -168,15 +170,18 @@ CREATE TABLE pipeline_log (
 
 CREATE INDEX idx_stock_industry ON stock (industry);
 CREATE INDEX idx_stock_status ON stock (status);
-CREATE INDEX idx_news_source ON news (source);
-CREATE INDEX idx_news_status ON news (status);
-CREATE INDEX idx_news_sentiment ON news (sentiment);
+CREATE INDEX idx_content_type ON content (type);
+CREATE INDEX idx_content_source ON content (source);
+CREATE INDEX idx_content_status ON content (status);
+CREATE INDEX idx_content_sentiment ON content (sentiment);
+CREATE INDEX idx_content_publish_date ON content (publish_date);
+CREATE INDEX idx_content_original_publish_date ON content (original_publish_date);
 CREATE INDEX idx_corporate_event_stock ON corporate_event (stock);
-CREATE INDEX idx_news_stock_news ON news_stock (news);
-CREATE INDEX idx_news_stock_stock ON news_stock (stock);
+CREATE INDEX idx_content_stock_content ON content_stock (content);
+CREATE INDEX idx_content_stock_stock ON content_stock (stock);
 CREATE INDEX idx_watchlist_user ON watchlist (user_id);
 CREATE INDEX idx_watchlist_stock ON watchlist (stock);
 CREATE INDEX idx_activity_log_user ON activity_log (user_id);
-CREATE INDEX idx_activity_log_news ON activity_log (news);
+CREATE INDEX idx_activity_log_content ON activity_log (content);
 CREATE INDEX idx_activity_log_audio ON activity_log (audio);
 CREATE INDEX idx_pipeline_log_source ON pipeline_log (source);

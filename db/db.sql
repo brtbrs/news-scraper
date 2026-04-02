@@ -4,7 +4,7 @@
 -- 2) avoid reserved identifiers (user -> app_user)
 -- 3) use TEXT for long article content
 -- 4) add CHECK constraints for positive durations / playback speed
--- 5) index commonly queried FK columns
+-- 5) index commonly queried FK columns and timestamps
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
@@ -31,9 +31,9 @@ CREATE TABLE sector_industry (
 
 CREATE TABLE source (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(150) NOT NULL,
+    name VARCHAR(150) NOT NULL UNIQUE,
     url TEXT NOT NULL UNIQUE,
-    last_scrapped_at TIMESTAMPTZ,
+    last_scraped_at TIMESTAMPTZ,
     active BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -174,6 +174,8 @@ CREATE INDEX idx_content_type ON content (type);
 CREATE INDEX idx_content_source ON content (source);
 CREATE INDEX idx_content_status ON content (status);
 CREATE INDEX idx_content_sentiment ON content (sentiment);
+CREATE INDEX idx_content_publish_date ON content (publish_date);
+CREATE INDEX idx_content_original_publish_date ON content (original_publish_date);
 CREATE INDEX idx_corporate_event_stock ON corporate_event (stock);
 CREATE INDEX idx_content_stock_content ON content_stock (content);
 CREATE INDEX idx_content_stock_stock ON content_stock (stock);
