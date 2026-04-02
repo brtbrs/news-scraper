@@ -1,0 +1,185 @@
+-- PostgreSQL DDL (improved)
+-- Improvements:
+-- 1) use TIMESTAMPTZ for timezone-safe timestamps
+-- 2) avoid reserved identifiers (user -> app_user)
+-- 3) use TEXT for long article content
+-- 4) add CHECK constraints for positive durations / playback speed
+-- 5) index commonly queried FK columns
+
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+CREATE TABLE attribute (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    type VARCHAR(100) NOT NULL,
+    code VARCHAR(100) NOT NULL,
+    str_value VARCHAR(255),
+    num_value INTEGER,
+    dec_value DOUBLE PRECISION,
+    date1_value TIMESTAMPTZ,
+    date2_value TIMESTAMPTZ,
+    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+    CONSTRAINT uq_attribute_type_code UNIQUE (type, code)
+);
+
+CREATE TABLE sector_industry (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    sector VARCHAR(100) NOT NULL,
+    industry VARCHAR(100) NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+    CONSTRAINT uq_sector_industry UNIQUE (sector, industry)
+);
+
+CREATE TABLE source (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(150) NOT NULL,
+    url TEXT NOT NULL UNIQUE,
+    last_scrapped_at TIMESTAMPTZ,
+    active BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE stock (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    ticker VARCHAR(20) NOT NULL UNIQUE,
+    name VARCHAR(255) NOT NULL UNIQUE,
+    industry UUID NOT NULL,
+    status UUID NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT fk_stock_industry FOREIGN KEY (industry) REFERENCES sector_industry (id) ON DELETE RESTRICT,
+    CONSTRAINT fk_stock_status FOREIGN KEY (status) REFERENCES attribute (id) ON DELETE RESTRICT
+);
+
+CREATE TABLE stock_alias (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    stock UUID NOT NULL,
+    alias VARCHAR(255) NOT NULL,
+    CONSTRAINT fk_stock_alias_stock FOREIGN KEY (stock) REFERENCES stock (id) ON DELETE CASCADE,
+    CONSTRAINT uq_stock_alias UNIQUE (stock, alias)
+);
+
+CREATE TABLE corporate_event (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    stock UUID NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    event_type UUID NOT NULL,
+    event_date TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT fk_corporate_event_stock FOREIGN KEY (stock) REFERENCES stock (id) ON DELETE CASCADE,
+    CONSTRAINT fk_corporate_event_type FOREIGN KEY (event_type) REFERENCES attribute (id) ON DELETE RESTRICT
+);
+
+CREATE TABLE content (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    type UUID NOT NULL,
+    source UUID NOT NULL,
+    url TEXT NOT NULL UNIQUE,
+    original_title TEXT NOT NULL,
+    original_content TEXT NOT NULL,
+    original_language VARCHAR(10) NOT NULL,
+    original_publish_date TIMESTAMPTZ NOT NULL,
+    title_id TEXT,
+    title_en TEXT,
+    content_id TEXT,
+    content_en TEXT,
+    sentiment UUID,
+    duplicate UUID,
+    publish_date TIMESTAMPTZ,
+    status UUID NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT fk_content_type FOREIGN KEY (type) REFERENCES attribute (id) ON DELETE RESTRICT,
+    CONSTRAINT fk_content_source FOREIGN KEY (source) REFERENCES source (id) ON DELETE CASCADE,
+    CONSTRAINT fk_content_sentiment FOREIGN KEY (sentiment) REFERENCES attribute (id) ON DELETE RESTRICT,
+    CONSTRAINT fk_content_duplicate FOREIGN KEY (duplicate) REFERENCES content (id) ON DELETE SET NULL,
+    CONSTRAINT fk_content_status FOREIGN KEY (status) REFERENCES attribute (id) ON DELETE RESTRICT
+);
+
+CREATE TABLE content_stock (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    content UUID NOT NULL,
+    stock UUID NOT NULL,
+    CONSTRAINT fk_content_stock_content FOREIGN KEY (content) REFERENCES content (id) ON DELETE CASCADE,
+    CONSTRAINT fk_content_stock_stock FOREIGN KEY (stock) REFERENCES stock (id) ON DELETE CASCADE,
+    CONSTRAINT uq_content_stock UNIQUE (content, stock)
+);
+
+CREATE TABLE audio (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    content UUID NOT NULL UNIQUE,
+    url_id TEXT,
+    url_en TEXT,
+    duration_id SMALLINT,
+    duration_en SMALLINT,
+    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT fk_audio_content FOREIGN KEY (content) REFERENCES content (id) ON DELETE CASCADE,
+    CONSTRAINT ck_audio_duration_id_positive CHECK (duration_id IS NULL OR duration_id >= 0),
+    CONSTRAINT ck_audio_duration_en_positive CHECK (duration_en IS NULL OR duration_en >= 0)
+);
+
+CREATE TABLE app_user (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email VARCHAR(255) NOT NULL UNIQUE,
+    name VARCHAR(255) NOT NULL,
+    provider VARCHAR(100) NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE user_profiles (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL UNIQUE,
+    theme VARCHAR(20) NOT NULL DEFAULT 'LIGHT',
+    language VARCHAR(10) NOT NULL DEFAULT 'ID',
+    playback_speed DOUBLE PRECISION NOT NULL DEFAULT 1.0,
+    CONSTRAINT fk_user_profiles_user FOREIGN KEY (user_id) REFERENCES app_user (id) ON DELETE CASCADE,
+    CONSTRAINT ck_user_profile_playback_speed CHECK (playback_speed > 0)
+);
+
+CREATE TABLE watchlist (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL,
+    stock UUID NOT NULL,
+    CONSTRAINT fk_watchlist_user FOREIGN KEY (user_id) REFERENCES app_user (id) ON DELETE CASCADE,
+    CONSTRAINT fk_watchlist_stock FOREIGN KEY (stock) REFERENCES stock (id) ON DELETE CASCADE,
+    CONSTRAINT uq_user_stock UNIQUE (user_id, stock)
+);
+
+CREATE TABLE activity_log (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL,
+    activity_type UUID NOT NULL,
+    content UUID,
+    audio UUID,
+    activity_start TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    activity_end TIMESTAMPTZ,
+    CONSTRAINT fk_activity_log_user FOREIGN KEY (user_id) REFERENCES app_user (id) ON DELETE CASCADE,
+    CONSTRAINT fk_activity_log_activity_type FOREIGN KEY (activity_type) REFERENCES attribute (id) ON DELETE RESTRICT,
+    CONSTRAINT fk_activity_log_content FOREIGN KEY (content) REFERENCES content (id) ON DELETE CASCADE,
+    CONSTRAINT fk_activity_log_audio FOREIGN KEY (audio) REFERENCES audio (id) ON DELETE CASCADE
+);
+
+CREATE TABLE pipeline_log (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    source UUID NOT NULL,
+    total_found INTEGER,
+    total_saved INTEGER,
+    start_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    end_at TIMESTAMPTZ,
+    CONSTRAINT fk_pipeline_log_source FOREIGN KEY (source) REFERENCES source (id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_stock_industry ON stock (industry);
+CREATE INDEX idx_stock_status ON stock (status);
+CREATE INDEX idx_content_type ON content (type);
+CREATE INDEX idx_content_source ON content (source);
+CREATE INDEX idx_content_status ON content (status);
+CREATE INDEX idx_content_sentiment ON content (sentiment);
+CREATE INDEX idx_corporate_event_stock ON corporate_event (stock);
+CREATE INDEX idx_content_stock_content ON content_stock (content);
+CREATE INDEX idx_content_stock_stock ON content_stock (stock);
+CREATE INDEX idx_watchlist_user ON watchlist (user_id);
+CREATE INDEX idx_watchlist_stock ON watchlist (stock);
+CREATE INDEX idx_activity_log_user ON activity_log (user_id);
+CREATE INDEX idx_activity_log_content ON activity_log (content);
+CREATE INDEX idx_activity_log_audio ON activity_log (audio);
+CREATE INDEX idx_pipeline_log_source ON pipeline_log (source);

@@ -1,20 +1,61 @@
-# Compiled class file
-*.class
-
-# Log file
-*.log
-
+# Maven / Java
 target/
-
-# Package Files #
+*.log
+*.class
 *.jar
 *.war
-*.nar
 *.ear
+
+# IDE - Eclipse
+.classpath
+.project
+.settings/
+
+# IDE - IntelliJ
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Database
+postgres_data/
+
+# Compressed files
 *.zip
 *.tar.gz
 *.rar
 
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+# Environment / secrets
+.env
+.env.*
+*.env
+
+# Logs
+logs/
+*.log
+
+# Docker
+docker-data/
+postgres_data/
+*.pid
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Node (if ever added)
+node_modules/
+
+# Test output
+surefire-reports/
+failsafe-reports/
+
+# VM crash logs
 hs_err_pid*
 replay_pid*
