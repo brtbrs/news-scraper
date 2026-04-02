@@ -8,7 +8,6 @@ import org.jsoup.nodes.*;
 import java.time.*;
 import java.time.format.*;
 import java.util.*;
-import java.util.regex.*;
 
 import com.microsoft.playwright.*;
 
@@ -125,7 +124,7 @@ public class CNBC extends BaseScraper implements NewsSource {
         if (meta != null) {
             String publishDate = cleanText(meta.attr("content"));
 
-        	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss", Locale.of("id", "ID"));
+        	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss", new Locale("id", "ID"));
         	LocalDateTime ldt = LocalDateTime.parse(publishDate, formatter);
 
         	return ldt;
@@ -134,15 +133,15 @@ public class CNBC extends BaseScraper implements NewsSource {
         return null;
     }
 
-    private void removeNoiseCNBC(Document doc) {
-        String[] selectors = {
-                "figcaption", ".topik2"
-        };
-
-        for (String sel : selectors) {
-            doc.select(sel).remove();
-        }
-    }
+//    private void removeNoiseCNBC(Document doc) {
+//        String[] selectors = {
+//                "figcaption", ".topik2"
+//        };
+//
+//        for (String sel : selectors) {
+//            doc.select(sel).remove();
+//        }
+//    }
 
     private String removePrefixSuffix(String str) {
     	//be careful: – is different -

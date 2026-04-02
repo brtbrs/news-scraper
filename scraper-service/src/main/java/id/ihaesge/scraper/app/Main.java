@@ -1,5 +1,7 @@
 package id.ihaesge.scraper.app;
 
+import java.util.List;
+
 import id.ihaesge.scraper.api.ApiArticleClient;
 import id.ihaesge.scraper.core.ArticleContent;
 import id.ihaesge.scraper.engine.NewsScraperEngine;
@@ -13,8 +15,6 @@ import id.ihaesge.scraper.sources.KataData;
 import id.ihaesge.scraper.sources.Kontan;
 import id.ihaesge.scraper.sources.Neraca;
 import id.ihaesge.scraper.sources.StockWatch;
-
-import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
@@ -36,16 +36,16 @@ public class Main {
     }
 
     private static void registerSources(NewsScraperEngine engine) {
-        engine.registerSource(new Bisnis());
-        // engine.registerSource(new CNBC());
-        // engine.registerSource(new EmitenNews());
-        // engine.registerSource(new EmitenTrust());
-        // engine.registerSource(new Investor());
-        // engine.registerSource(new IPOTNews());
-        // engine.registerSource(new KataData());
-        // engine.registerSource(new Kontan());
-        // engine.registerSource(new Neraca());
-        // engine.registerSource(new StockWatch());
+		engine.registerSource(new Bisnis());
+		engine.registerSource(new CNBC());
+		engine.registerSource(new EmitenNews());
+		engine.registerSource(new EmitenTrust());
+		engine.registerSource(new Investor());
+		engine.registerSource(new IPOTNews());
+		engine.registerSource(new KataData());
+		engine.registerSource(new Kontan());
+		engine.registerSource(new Neraca());
+		engine.registerSource(new StockWatch());
     }
 
     private static int readScrapeLimit(String[] args) {

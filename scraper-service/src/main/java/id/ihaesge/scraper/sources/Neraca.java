@@ -5,11 +5,9 @@ import id.ihaesge.scraper.core.*;
 import java.time.*;
 import java.time.format.*;
 import java.util.*;
-import java.util.regex.*;
 
 import org.jsoup.*;
 import org.jsoup.nodes.*;
-import org.jsoup.parser.*;
 
 import com.microsoft.playwright.*;
 
@@ -122,7 +120,7 @@ public class Neraca extends BaseScraper implements NewsSource {
         if (el != null) {
             String publishDate = cleanText(el.text() + " 00:00:01");
 
-        	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEEE, dd/MM/yyyy HH:mm:ss", Locale.of("id", "ID"));
+        	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEEE, dd/MM/yyyy HH:mm:ss", new Locale("id", "ID"));
         	LocalDateTime ldt = LocalDateTime.parse(publishDate, formatter);
 
         	return ldt;

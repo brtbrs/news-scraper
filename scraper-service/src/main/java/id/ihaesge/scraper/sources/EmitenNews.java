@@ -4,12 +4,10 @@ import id.ihaesge.scraper.core.*;
 
 import org.jsoup.*;
 import org.jsoup.nodes.*;
-import org.jsoup.select.Elements;
 
 import java.time.*;
 import java.time.format.*;
 import java.util.*;
-import java.util.regex.*;
 
 import com.microsoft.playwright.*;
 
@@ -120,7 +118,7 @@ public class EmitenNews extends BaseScraper implements NewsSource {
         	String[] parts = element.text().replaceAll("WIB", "").trim().split(",");
             if (parts.length == 2) {
             	String combine = parts[0].trim() + " " + parts[1].trim();
-            	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm", Locale.of("id", "ID"));
+            	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm", new Locale("id", "ID"));
             	LocalDateTime ldt = LocalDateTime.parse(combine, formatter);
             	return ldt;
             }
@@ -129,15 +127,15 @@ public class EmitenNews extends BaseScraper implements NewsSource {
         return null;
     }
 
-    private void removeNoiseEmitenNews(Document doc) {
-        String[] selectors = {
-                ".content-index-header", ".info-author", ".article-header-img", ".news-container.other-emiten-news-wrapper", ".recommendation-news-text"
-        };
-
-        for (String sel : selectors) {
-            doc.select(sel).remove();
-        }
-    }
+//    private void removeNoiseEmitenNews(Document doc) {
+//        String[] selectors = {
+//                ".content-index-header", ".info-author", ".article-header-img", ".news-container.other-emiten-news-wrapper", ".recommendation-news-text"
+//        };
+//
+//        for (String sel : selectors) {
+//            doc.select(sel).remove();
+//        }
+//    }
 
     private String removePrefixSuffix(String str) {
     	//be careful: – is different -

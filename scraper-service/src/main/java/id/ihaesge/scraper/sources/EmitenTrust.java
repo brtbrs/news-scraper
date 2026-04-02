@@ -5,11 +5,9 @@ import id.ihaesge.scraper.core.*;
 import java.time.*;
 import java.time.format.*;
 import java.util.*;
-import java.util.regex.*;
 
 import org.jsoup.*;
 import org.jsoup.nodes.*;
-import org.jsoup.parser.*;
 
 import com.microsoft.playwright.*;
 
@@ -137,7 +135,7 @@ public class EmitenTrust extends BaseScraper implements NewsSource {
         if (meta != null) {
             String publishDate = cleanText(meta.attr("content"));
 
-        	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.of("id", "ID"));
+        	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX", new Locale("id", "ID"));
         	LocalDateTime ldt = LocalDateTime.parse(publishDate, formatter);
 
         	return ldt;
@@ -146,15 +144,15 @@ public class EmitenTrust extends BaseScraper implements NewsSource {
         return null;
     }
 
-    private void removeNoiseEmitenTrust(Document doc) {
-        String[] selectors = {
-                ".content-index-header", ".info-author", ".article-header-img", ".news-container.other-emiten-news-wrapper", ".recommendation-news-text"
-        };
-
-        for (String sel : selectors) {
-            doc.select(sel).remove();
-        }
-    }
+//    private void removeNoiseEmitenTrust(Document doc) {
+//        String[] selectors = {
+//                ".content-index-header", ".info-author", ".article-header-img", ".news-container.other-emiten-news-wrapper", ".recommendation-news-text"
+//        };
+//
+//        for (String sel : selectors) {
+//            doc.select(sel).remove();
+//        }
+//    }
 
     private String removePrefixSuffix(String str) {
     	//be careful: – is different -

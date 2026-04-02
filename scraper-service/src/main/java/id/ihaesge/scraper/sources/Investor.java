@@ -144,7 +144,7 @@ public class Investor extends BaseScraper implements NewsSource {
             Matcher m = p.matcher(json);
 
             if (m.find()) {
-            	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.of("id", "ID"));
+            	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX", new Locale("id", "ID"));
             	LocalDateTime ldt = LocalDateTime.parse(m.group(1), formatter);
 
             	return ldt;
@@ -154,15 +154,15 @@ public class Investor extends BaseScraper implements NewsSource {
         return null;
     }
 
-    private void removeNoiseInvestor(Document doc) {
-        String[] selectors = {
-                ".modal.fade"
-        };
-
-        for (String sel : selectors) {
-            doc.select(sel).remove();
-        }
-    }
+//    private void removeNoiseInvestor(Document doc) {
+//        String[] selectors = {
+//                ".modal.fade"
+//        };
+//
+//        for (String sel : selectors) {
+//            doc.select(sel).remove();
+//        }
+//    }
 
     private boolean isMultiPage(Document doc) {
         return doc.text().contains("Halaman:");
