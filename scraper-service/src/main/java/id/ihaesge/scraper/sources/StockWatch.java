@@ -13,8 +13,9 @@ import com.microsoft.playwright.*;
 
 public class StockWatch extends BaseScraper implements NewsSource {
 	private final String BASE_URL = "https://stockwatch.id/";
-	private final String BASE_URL_FINANSIAL = BASE_URL + "category/finansial/";
-	private final String BASE_URL_MARKET = BASE_URL + "category/market/";
+	private final String FINANSIAL_URL = BASE_URL + "category/finansial/";
+	private final String MARKET_URL = BASE_URL + "category/market/";
+	private final String AUTHOR_URL = BASE_URL + "author/";
 
     @Override
     public String getSourceName() {
@@ -23,7 +24,7 @@ public class StockWatch extends BaseScraper implements NewsSource {
 
     @Override
     public List<ArticleItem> getArticleList(int scrapLimit) throws Exception {
-        Document doc = Jsoup.connect(BASE_URL_MARKET).get();
+        Document doc = Jsoup.connect(MARKET_URL).get();
 
         List<ArticleItem> list = new ArrayList<>();
         Set<String> seen = new HashSet<>();
@@ -35,7 +36,9 @@ public class StockWatch extends BaseScraper implements NewsSource {
             String href = el.attr("href");
             String title = cleanText(el.attr("title"));
 
-            if (href.contains(BASE_URL) && !href.startsWith(BASE_URL_MARKET) && !href.startsWith(BASE_URL + "author/")) {
+            //<a href="https://stockwatch.id/bidik-pasar-digital-usd-29-miliar-dssa-garap-proyek-panas-bumi-hingga-infrastruktur-ai/"  rel="bookmark" 
+            //<a href="https://stockwatch.id/author/daiz/">
+            if (href.contains(BASE_URL) && !href.startsWith(MARKET_URL) && !href.startsWith(AUTHOR_URL)) {
 	        	if (!seen.contains(href)) {
 	        		seen.add(href);
 
@@ -55,7 +58,7 @@ public class StockWatch extends BaseScraper implements NewsSource {
             String href = el.attr("href");
             String title = cleanText(el.attr("title"));
 
-            if (href.contains(BASE_URL) && !href.startsWith(BASE_URL_MARKET) && !href.startsWith(BASE_URL + "author/")) {
+            if (href.contains(BASE_URL) && !href.startsWith(MARKET_URL) && !href.startsWith(AUTHOR_URL)) {
 	        	if (!seen.contains(href)) {
 	        		seen.add(href);
 
@@ -75,7 +78,7 @@ public class StockWatch extends BaseScraper implements NewsSource {
             String href = el.attr("href");
             String title = cleanText(el.attr("title"));
 
-            if (href.contains(BASE_URL) && !href.startsWith(BASE_URL_FINANSIAL) && !href.startsWith(BASE_URL + "author/")) {
+            if (href.contains(BASE_URL) && !href.startsWith(FINANSIAL_URL) && !href.startsWith(AUTHOR_URL)) {
 	        	if (!seen.contains(href)) {
 	        		seen.add(href);
 

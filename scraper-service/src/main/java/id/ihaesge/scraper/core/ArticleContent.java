@@ -17,4 +17,10 @@ public class ArticleContent {
         this.url = url;
         this.source = source;
     }
+
+    public String toString() {
+    	StringBuffer sb = new StringBuffer();
+    	sb.append("\ntitle : " + this.title).append("\npublishDate : " + this.publishDate).append("\nurl : " + this.url).append("\nsource : " + this.source).append("\ncontent : " + this.content);
+    	return sb.toString();
+    }
 }

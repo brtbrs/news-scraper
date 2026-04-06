@@ -27,6 +27,7 @@ public class CNBC extends BaseScraper implements NewsSource {
         Set<String> seen = new HashSet<>();
 
         // ✅ MULTIPLE containers
+        //<article>
         for (Element div : doc.select("article")) {
 
             // ✅ MULTIPLE links inside each container
@@ -34,7 +35,8 @@ public class CNBC extends BaseScraper implements NewsSource {
             	String href = el.attr("href");
                 String title = cleanText(el.text());
 
-                if (href.contains("/market/") && href.matches(".*\\d{14}-\\d+-.*")) {
+            	//<a class="group flex gap-4 items-center" href="https://www.cnbcindonesia.com/market/20260406102727-17-724106/ojk-ungkap-makna-saham-hsc-bukan-pelanggaran-tapi" dtr-evt="nhl" 
+                if (href.contains("/market/")) {
                 	if (!href.startsWith("http")) {
                 		href = BASE_URL + href;
                 	}

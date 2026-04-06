@@ -12,7 +12,9 @@ import org.jsoup.nodes.*;
 import com.microsoft.playwright.*;
 
 public class EmitenTrust extends BaseScraper implements NewsSource {
-	private final String BASE_URL = "https://emitentrust.com/category/stock-and-market/";
+	private final String BASE_URL = "https://emitentrust.com/";
+	private final String MARKET_URL = BASE_URL + "category/stock-and-market/";
+	private final String AUTHOR_URL = BASE_URL + "author/";
 
     @Override
     public String getSourceName() {
@@ -21,18 +23,20 @@ public class EmitenTrust extends BaseScraper implements NewsSource {
 
     @Override
     public List<ArticleItem> getArticleList(int scrapLimit) throws Exception {
-        Document doc = Jsoup.connect(BASE_URL).get();
+        Document doc = Jsoup.connect(MARKET_URL).get();
 
         List<ArticleItem> list = new ArrayList<>();
         Set<String> seen = new HashSet<>();
 
         //<div id=tdi_74 class="td_block_inner">
-        Element div = doc.selectFirst("#tdi_74");
+        Element div = doc.selectFirst("div#tdi_74");
         for (Element el : div.select("a")) {
             String href = el.attr("href");
             String title = cleanText(el.text());
 
-            if (href.contains("https://emitentrust.com/") && !href.startsWith(BASE_URL) && !href.startsWith("https://emitentrust.com/author/")) {
+            //<a href="https://emitentrust.com/bank-mega-mega-tebar-dividen-jumbo-rp2t-ini-jadwalnya/"  rel="bookmark" 
+            //<a href="https://emitentrust.com/author/komarudin/">
+            if (href.contains(BASE_URL) && !href.startsWith(MARKET_URL) && !href.startsWith(AUTHOR_URL)) {
 	        	if (!seen.contains(href)) {
 	        		seen.add(href);
 
@@ -46,12 +50,12 @@ public class EmitenTrust extends BaseScraper implements NewsSource {
         }
 
         //<div id=tdi_80 class="td_block_inner tdb-block-inner td-fix-index">
-        div = doc.selectFirst("#tdi_80");
+        div = doc.selectFirst("div#tdi_80");
         for (Element el : div.select("a")) {
             String href = el.attr("href");
             String title = cleanText(el.text());
 
-            if (href.contains("https://emitentrust.com/") && !href.startsWith(BASE_URL) && !href.startsWith("https://emitentrust.com/author/")) {
+            if (href.contains(BASE_URL) && !href.startsWith(MARKET_URL) && !href.startsWith(AUTHOR_URL)) {
 	        	if (!seen.contains(href)) {
 	        		seen.add(href);
 

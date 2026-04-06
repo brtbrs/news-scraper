@@ -1,187 +1,223 @@
--- PostgreSQL DDL (improved)
--- Improvements:
--- 1) use TIMESTAMPTZ for timezone-safe timestamps
--- 2) avoid reserved identifiers (user -> app_user)
--- 3) use TEXT for long article content
--- 4) add CHECK constraints for positive durations / playback speed
--- 5) index commonly queried FK columns and timestamps
+INSERT INTO attribute (type, code, str_value) VALUES ('STOCK_STATUS', 'LISTED', 'LISTED');
+INSERT INTO attribute (type, code, str_value) VALUES ('STOCK_STATUS', 'DELISTED', 'DELISTED');
+INSERT INTO attribute (type, code, str_value) VALUES ('STOCK_STATUS', 'SUSPENDED', 'SUSPENDED');
+INSERT INTO attribute (type, code, str_value) VALUES ('STOCK_BOARD', 'UTAMA', 'UTAMA');
+INSERT INTO attribute (type, code, str_value) VALUES ('STOCK_BOARD', 'PENGEMBANGAN', 'PENGEMBANGAN');
+INSERT INTO attribute (type, code, str_value) VALUES ('STOCK_BOARD', 'AKSELERASI', 'AKSELERASI');
+INSERT INTO attribute (type, code, str_value) VALUES ('STOCK_BOARD', 'PEMANTAUAN_KHUSUS', 'PEMANTAUAN KHUSUS');
+INSERT INTO attribute (type, code, str_value) VALUES ('STOCK_BOARD', 'EKONOMI_BARU', 'EKONOMI BARU');
+INSERT INTO attribute (type, code, str_value) VALUES ('CORP_EVENT_TYPE', 'IPO', 'IPO');
+INSERT INTO attribute (type, code, str_value) VALUES ('CORP_EVENT_TYPE', 'RIGHT_ISSUE', 'RIGHT ISSUE');
+INSERT INTO attribute (type, code, str_value) VALUES ('CORP_EVENT_TYPE', 'WARRANT', 'WARRANT');
+INSERT INTO attribute (type, code, str_value) VALUES ('CORP_EVENT_TYPE', 'BONUS', 'BONUS');
+INSERT INTO attribute (type, code, str_value) VALUES ('CORP_EVENT_TYPE', 'TENDER_OFFER', 'TENDER OFFER');
+INSERT INTO attribute (type, code, str_value) VALUES ('CORP_EVENT_TYPE', 'DIVIDEND', 'DIVIDEND');
+INSERT INTO attribute (type, code, str_value) VALUES ('CORP_EVENT_TYPE', 'EARNINGS', 'EARNINGS');
+INSERT INTO attribute (type, code, str_value) VALUES ('CORP_EVENT_TYPE', 'STOCK_SPLIT', 'STOCK SPLIT');
+INSERT INTO attribute (type, code, str_value) VALUES ('CORP_EVENT_TYPE', 'REVERSE_SPLIT', 'REVERSE SPLIT');
+INSERT INTO attribute (type, code, str_value) VALUES ('CORP_EVENT_TYPE', 'RUPS', 'RUPS');
+INSERT INTO attribute (type, code, str_value) VALUES ('CORP_EVENT_TYPE', 'PUBEX', 'PUBEX');
+INSERT INTO attribute (type, code, str_value) VALUES ('CONTENT_TYPE', 'NEWS', 'NEWS');
+INSERT INTO attribute (type, code, str_value) VALUES ('CONTENT_TYPE', 'ARTICLE', 'ARTICLE');
+INSERT INTO attribute (type, code, str_value) VALUES ('CONTENT_STATUS', 'PENDING', 'PENDING');
+INSERT INTO attribute (type, code, str_value) VALUES ('CONTENT_STATUS', 'ACTIVE', 'ACTIVE');
+INSERT INTO attribute (type, code, str_value) VALUES ('CONTENT_STATUS', 'INACTIVE', 'INACTIVE');
+INSERT INTO attribute (type, code, str_value) VALUES ('SENTIMENT', 'POSITIVE', 'POSITIVE');
+INSERT INTO attribute (type, code, str_value) VALUES ('SENTIMENT', 'NEUTRAL', 'NEUTRAL');
+INSERT INTO attribute (type, code, str_value) VALUES ('SENTIMENT', 'NEGATIVE', 'NEGATIVE');
+INSERT INTO attribute (type, code, str_value) VALUES ('ACTIVITY_TYPE', 'LOGIN', 'LOGIN');
+INSERT INTO attribute (type, code, str_value) VALUES ('ACTIVITY_TYPE', 'LISTEN', 'LISTEN');
+INSERT INTO attribute (type, code, str_value) VALUES ('ACTIVITY_TYPE', 'READ', 'READ');
 
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
+INSERT INTO sector (id, name) VALUES ('IDXENERGY', 'Energy');
+INSERT INTO sector (id, name) VALUES ('IDXBASIC', 'Basic Materials');
+INSERT INTO sector (id, name) VALUES ('IDXINDUST', 'Industrials');
+INSERT INTO sector (id, name) VALUES ('IDXNONCYC', 'Consumer Non-Cyclicals');
+INSERT INTO sector (id, name) VALUES ('IDXCYCLIC', 'Consumer Cyclicals');
+INSERT INTO sector (id, name) VALUES ('IDXHEALTH', 'Healthcare');
+INSERT INTO sector (id, name) VALUES ('IDXFINANCE', 'Financials');
+INSERT INTO sector (id, name) VALUES ('IDXPROPERT', 'Properties & Real Estate');
+INSERT INTO sector (id, name) VALUES ('IDXTECHNO', 'Technology');
+INSERT INTO sector (id, name) VALUES ('IDXINFRA', 'Infrastructures');
+INSERT INTO sector (id, name) VALUES ('IDXTRANS', 'Transportation & Logistic');
+INSERT INTO sector (id, name) VALUES ('IDXINVEST', 'Listed Investment Product');
 
-CREATE TABLE attribute (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    type VARCHAR(100) NOT NULL,
-    code VARCHAR(100) NOT NULL,
-    str_value VARCHAR(255),
-    num_value INTEGER,
-    dec_value DOUBLE PRECISION,
-    date1_value TIMESTAMPTZ,
-    date2_value TIMESTAMPTZ,
-    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
-    CONSTRAINT uq_attribute_type_code UNIQUE (type, code)
-);
+INSERT INTO industry (id, name, sector) VALUES ('A11', 'Oil & Gas', 'IDXENERGY');
+INSERT INTO industry (id, name, sector) VALUES ('A12', 'Coal', 'IDXENERGY');
+INSERT INTO industry (id, name, sector) VALUES ('A13', 'Oil, Gas & Coal Supports', 'IDXENERGY');
+INSERT INTO industry (id, name, sector) VALUES ('A21', 'Alternative Energy Equipment', 'IDXENERGY');
+INSERT INTO industry (id, name, sector) VALUES ('A22', 'Alternative Fuels', 'IDXENERGY');
 
-CREATE TABLE sector_industry (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    sector VARCHAR(100) NOT NULL,
-    industry VARCHAR(100) NOT NULL,
-    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
-    CONSTRAINT uq_sector_industry UNIQUE (sector, industry)
-);
+INSERT INTO industry (id, name, sector) VALUES ('B11', 'Chemicals', 'IDXBASIC');
+INSERT INTO industry (id, name, sector) VALUES ('B12', 'Construction Materials', 'IDXBASIC');
+INSERT INTO industry (id, name, sector) VALUES ('B13', 'Containers & Packaging', 'IDXBASIC');
+INSERT INTO industry (id, name, sector) VALUES ('B14', 'Metals & Minerals', 'IDXBASIC');
+INSERT INTO industry (id, name, sector) VALUES ('B15', 'Forestry & Paper', 'IDXBASIC');
 
-CREATE TABLE source (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(150) NOT NULL UNIQUE,
-    url TEXT NOT NULL UNIQUE,
-    last_scraped_at TIMESTAMPTZ,
-    active BOOLEAN NOT NULL DEFAULT FALSE,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
+INSERT INTO industry (id, name, sector) VALUES ('C11', 'Aerospace & Defense', 'IDXINDUST');
+INSERT INTO industry (id, name, sector) VALUES ('C12', 'Building Products & Fixtures', 'IDXINDUST');
+INSERT INTO industry (id, name, sector) VALUES ('C13', 'Electrical', 'IDXINDUST');
+INSERT INTO industry (id, name, sector) VALUES ('C14', 'Machinery', 'IDXINDUST');
+INSERT INTO industry (id, name, sector) VALUES ('C21', 'Diversified Industrial Trading', 'IDXINDUST');
+INSERT INTO industry (id, name, sector) VALUES ('C22', 'Commercial Services', 'IDXINDUST');
+INSERT INTO industry (id, name, sector) VALUES ('C23', 'Professional Services', 'IDXINDUST');
+INSERT INTO industry (id, name, sector) VALUES ('C31', 'Multi-sector Holdings', 'IDXINDUST');
 
-CREATE TABLE stock (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    ticker VARCHAR(20) NOT NULL UNIQUE,
-    name VARCHAR(255) NOT NULL UNIQUE,
-    industry UUID NOT NULL,
-    status UUID NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT fk_stock_industry FOREIGN KEY (industry) REFERENCES sector_industry (id) ON DELETE RESTRICT,
-    CONSTRAINT fk_stock_status FOREIGN KEY (status) REFERENCES attribute (id) ON DELETE RESTRICT
-);
+INSERT INTO industry (id, name, sector) VALUES ('D11', 'Food & Staples Retailing', 'IDXNONCYC');
+INSERT INTO industry (id, name, sector) VALUES ('D21', 'Beverages', 'IDXNONCYC');
+INSERT INTO industry (id, name, sector) VALUES ('D22', 'Processed Foods', 'IDXNONCYC');
+INSERT INTO industry (id, name, sector) VALUES ('D23', 'Agricultural Products', 'IDXNONCYC');
+INSERT INTO industry (id, name, sector) VALUES ('D31', 'Tobacco', 'IDXNONCYC');
+INSERT INTO industry (id, name, sector) VALUES ('D41', 'Household Products', 'IDXNONCYC');
+INSERT INTO industry (id, name, sector) VALUES ('D42', 'Personal Care Products', 'IDXNONCYC');
 
-CREATE TABLE stock_alias (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    stock UUID NOT NULL,
-    alias VARCHAR(255) NOT NULL,
-    CONSTRAINT fk_stock_alias_stock FOREIGN KEY (stock) REFERENCES stock (id) ON DELETE CASCADE,
-    CONSTRAINT uq_stock_alias UNIQUE (stock, alias)
-);
+INSERT INTO industry (id, name, sector) VALUES ('E11', 'Auto Components', 'IDXCYCLIC');
+INSERT INTO industry (id, name, sector) VALUES ('E12', 'Automobiles', 'IDXCYCLIC');
+INSERT INTO industry (id, name, sector) VALUES ('E21', 'Household Goods', 'IDXCYCLIC');
+INSERT INTO industry (id, name, sector) VALUES ('E31', 'Consumer Electronics', 'IDXCYCLIC');
+INSERT INTO industry (id, name, sector) VALUES ('E32', 'Sport Equipment & Hobbies Goods', 'IDXCYCLIC');
+INSERT INTO industry (id, name, sector) VALUES ('E41', 'Apparel & Luxury Goods', 'IDXCYCLIC');
+INSERT INTO industry (id, name, sector) VALUES ('E51', 'Tourism & Recreation', 'IDXCYCLIC');
+INSERT INTO industry (id, name, sector) VALUES ('E52', 'Education & Support Services', 'IDXCYCLIC');
+INSERT INTO industry (id, name, sector) VALUES ('E61', 'Media', 'IDXCYCLIC');
+INSERT INTO industry (id, name, sector) VALUES ('E62', 'Entertainment & Movie Production', 'IDXCYCLIC');
+INSERT INTO industry (id, name, sector) VALUES ('E71', 'Consumer Distributors', 'IDXCYCLIC');
+INSERT INTO industry (id, name, sector) VALUES ('E72', 'Internet & Homeshop Retail', 'IDXCYCLIC');
+INSERT INTO industry (id, name, sector) VALUES ('E73', 'Department Stores', 'IDXCYCLIC');
+INSERT INTO industry (id, name, sector) VALUES ('E74', 'Specialty Retail', 'IDXCYCLIC');
 
-CREATE TABLE corporate_event (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    stock UUID NOT NULL,
-    title VARCHAR(255) NOT NULL,
-    event_type UUID NOT NULL,
-    event_date TIMESTAMPTZ NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT fk_corporate_event_stock FOREIGN KEY (stock) REFERENCES stock (id) ON DELETE CASCADE,
-    CONSTRAINT fk_corporate_event_type FOREIGN KEY (event_type) REFERENCES attribute (id) ON DELETE RESTRICT
-);
+INSERT INTO industry (id, name, sector) VALUES ('F11', 'Healthcare Equipment & Supplies', 'IDXHEALTH');
+INSERT INTO industry (id, name, sector) VALUES ('F12', 'Healthcare Providers', 'IDXHEALTH');
+INSERT INTO industry (id, name, sector) VALUES ('F21', 'Pharmaceuticals', 'IDXHEALTH');
+INSERT INTO industry (id, name, sector) VALUES ('F22', 'Healthcare Research', 'IDXHEALTH');
 
-CREATE TABLE content (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    type UUID NOT NULL,
-    source UUID NOT NULL,
-    url TEXT NOT NULL UNIQUE,
-    original_title TEXT NOT NULL,
-    original_content TEXT NOT NULL,
-    original_language VARCHAR(10) NOT NULL,
-    original_publish_date TIMESTAMPTZ NOT NULL,
-    title_id TEXT,
-    title_en TEXT,
-    content_id TEXT,
-    content_en TEXT,
-    sentiment UUID,
-    duplicate UUID,
-    publish_date TIMESTAMPTZ,
-    status UUID NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT fk_content_type FOREIGN KEY (type) REFERENCES attribute (id) ON DELETE RESTRICT,
-    CONSTRAINT fk_content_source FOREIGN KEY (source) REFERENCES source (id) ON DELETE CASCADE,
-    CONSTRAINT fk_content_sentiment FOREIGN KEY (sentiment) REFERENCES attribute (id) ON DELETE RESTRICT,
-    CONSTRAINT fk_content_duplicate FOREIGN KEY (duplicate) REFERENCES content (id) ON DELETE SET NULL,
-    CONSTRAINT fk_content_status FOREIGN KEY (status) REFERENCES attribute (id) ON DELETE RESTRICT
-);
+INSERT INTO industry (id, name, sector) VALUES ('G11', 'Banks', 'IDXFINANCE');
+INSERT INTO industry (id, name, sector) VALUES ('G21', 'Consumer Financing', 'IDXFINANCE');
+INSERT INTO industry (id, name, sector) VALUES ('G22', 'Business Financing', 'IDXFINANCE');
+INSERT INTO industry (id, name, sector) VALUES ('G31', 'Investment Services', 'IDXFINANCE');
+INSERT INTO industry (id, name, sector) VALUES ('G41', 'Insurance', 'IDXFINANCE');
+INSERT INTO industry (id, name, sector) VALUES ('G51', 'Holding & Investment Companies', 'IDXFINANCE');
 
-CREATE TABLE content_stock (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    content UUID NOT NULL,
-    stock UUID NOT NULL,
-    CONSTRAINT fk_content_stock_content FOREIGN KEY (content) REFERENCES content (id) ON DELETE CASCADE,
-    CONSTRAINT fk_content_stock_stock FOREIGN KEY (stock) REFERENCES stock (id) ON DELETE CASCADE,
-    CONSTRAINT uq_content_stock UNIQUE (content, stock)
-);
+INSERT INTO industry (id, name, sector) VALUES ('H11', 'Real Estate Management & Development', 'IDXPROPERT');
 
-CREATE TABLE audio (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    content UUID NOT NULL UNIQUE,
-    url_id TEXT,
-    url_en TEXT,
-    duration_id SMALLINT,
-    duration_en SMALLINT,
-    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT fk_audio_content FOREIGN KEY (content) REFERENCES content (id) ON DELETE CASCADE,
-    CONSTRAINT ck_audio_duration_id_positive CHECK (duration_id IS NULL OR duration_id >= 0),
-    CONSTRAINT ck_audio_duration_en_positive CHECK (duration_en IS NULL OR duration_en >= 0)
-);
+INSERT INTO industry (id, name, sector) VALUES ('I11', 'Online Applications & Services', 'IDXTECHNO');
+INSERT INTO industry (id, name, sector) VALUES ('I12', 'IT Services & Consulting', 'IDXTECHNO');
+INSERT INTO industry (id, name, sector) VALUES ('I13', 'Software', 'IDXTECHNO');
+INSERT INTO industry (id, name, sector) VALUES ('I21', 'Networking Equipment', 'IDXTECHNO');
+INSERT INTO industry (id, name, sector) VALUES ('I22', 'Computer Hardware', 'IDXTECHNO');
+INSERT INTO industry (id, name, sector) VALUES ('I23', 'Electronic Equipment, Instruments & Components', 'IDXTECHNO');
+INSERT INTO industry (id, name, sector) VALUES ('J11', 'Transport Infrastructure Operator', 'IDXINFRA');
+INSERT INTO industry (id, name, sector) VALUES ('J21', 'Heavy Constructions & Civil Engineering', 'IDXINFRA');
+INSERT INTO industry (id, name, sector) VALUES ('J31', 'Telecommunication Service', 'IDXINFRA');
+INSERT INTO industry (id, name, sector) VALUES ('J32', 'Wireless Telecommunication Services', 'IDXINFRA');
+INSERT INTO industry (id, name, sector) VALUES ('J41', 'Electric Utilities ', 'IDXINFRA');
+INSERT INTO industry (id, name, sector) VALUES ('J42', 'Gas Utilities', 'IDXINFRA');
+INSERT INTO industry (id, name, sector) VALUES ('J43', 'Water Utilities', 'IDXINFRA');
+INSERT INTO industry (id, name, sector) VALUES ('K11', 'Airlines', 'IDXTRANS');
+INSERT INTO industry (id, name, sector) VALUES ('K12', 'Passenger Marine Transportation', 'IDXTRANS');
+INSERT INTO industry (id, name, sector) VALUES ('K13', 'Passenger Land Transportation', 'IDXTRANS');
+INSERT INTO industry (id, name, sector) VALUES ('K21', 'Logistics & Deliveries', 'IDXTRANS');
 
-CREATE TABLE app_user (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    email VARCHAR(255) NOT NULL UNIQUE,
-    name VARCHAR(255) NOT NULL,
-    provider VARCHAR(100) NOT NULL,
-    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE user_profiles (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL UNIQUE,
-    theme VARCHAR(20) NOT NULL DEFAULT 'LIGHT',
-    language VARCHAR(10) NOT NULL DEFAULT 'ID',
-    playback_speed DOUBLE PRECISION NOT NULL DEFAULT 1.0,
-    CONSTRAINT fk_user_profiles_user FOREIGN KEY (user_id) REFERENCES app_user (id) ON DELETE CASCADE,
-    CONSTRAINT ck_user_profile_playback_speed CHECK (playback_speed > 0)
-);
-
-CREATE TABLE watchlist (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL,
-    stock UUID NOT NULL,
-    CONSTRAINT fk_watchlist_user FOREIGN KEY (user_id) REFERENCES app_user (id) ON DELETE CASCADE,
-    CONSTRAINT fk_watchlist_stock FOREIGN KEY (stock) REFERENCES stock (id) ON DELETE CASCADE,
-    CONSTRAINT uq_user_stock UNIQUE (user_id, stock)
-);
-
-CREATE TABLE activity_log (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL,
-    activity_type UUID NOT NULL,
-    content UUID,
-    audio UUID,
-    activity_start TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    activity_end TIMESTAMPTZ,
-    CONSTRAINT fk_activity_log_user FOREIGN KEY (user_id) REFERENCES app_user (id) ON DELETE CASCADE,
-    CONSTRAINT fk_activity_log_activity_type FOREIGN KEY (activity_type) REFERENCES attribute (id) ON DELETE RESTRICT,
-    CONSTRAINT fk_activity_log_content FOREIGN KEY (content) REFERENCES content (id) ON DELETE CASCADE,
-    CONSTRAINT fk_activity_log_audio FOREIGN KEY (audio) REFERENCES audio (id) ON DELETE CASCADE
-);
-
-CREATE TABLE pipeline_log (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    source UUID NOT NULL,
-    total_found INTEGER,
-    total_saved INTEGER,
-    start_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    end_at TIMESTAMPTZ,
-    CONSTRAINT fk_pipeline_log_source FOREIGN KEY (source) REFERENCES source (id) ON DELETE CASCADE
-);
-
-CREATE INDEX idx_stock_industry ON stock (industry);
-CREATE INDEX idx_stock_status ON stock (status);
-CREATE INDEX idx_content_type ON content (type);
-CREATE INDEX idx_content_source ON content (source);
-CREATE INDEX idx_content_status ON content (status);
-CREATE INDEX idx_content_sentiment ON content (sentiment);
-CREATE INDEX idx_content_publish_date ON content (publish_date);
-CREATE INDEX idx_content_original_publish_date ON content (original_publish_date);
-CREATE INDEX idx_corporate_event_stock ON corporate_event (stock);
-CREATE INDEX idx_content_stock_content ON content_stock (content);
-CREATE INDEX idx_content_stock_stock ON content_stock (stock);
-CREATE INDEX idx_watchlist_user ON watchlist (user_id);
-CREATE INDEX idx_watchlist_stock ON watchlist (stock);
-CREATE INDEX idx_activity_log_user ON activity_log (user_id);
-CREATE INDEX idx_activity_log_content ON activity_log (content);
-CREATE INDEX idx_activity_log_audio ON activity_log (audio);
-CREATE INDEX idx_pipeline_log_source ON pipeline_log (source);
+INSERT INTO sub_industry (id, name, industry) VALUES ('A111', 'Oil & Gas Production & Refinery', 'A11');
+INSERT INTO sub_industry (id, name, industry) VALUES ('A121', 'Coal Production', 'A12');
+INSERT INTO sub_industry (id, name, industry) VALUES ('A122', 'Coal Distribution', 'A12');
+INSERT INTO sub_industry (id, name, industry) VALUES ('A131', 'Oil & Gas Drilling Service', 'A13');
+INSERT INTO sub_industry (id, name, industry) VALUES ('A132', 'Oil, Gas & Coal Equipment & Services', 'A13');
+INSERT INTO sub_industry (id, name, industry) VALUES ('A211', 'Alternative Energy Equipment', 'A21');
+INSERT INTO sub_industry (id, name, industry) VALUES ('A221', 'Alternative Fuels', 'A22');
+INSERT INTO sub_industry (id, name, industry) VALUES ('B111', 'Basic Chemicals', 'B11');
+INSERT INTO sub_industry (id, name, industry) VALUES ('B112', 'Agricultural Chemicals', 'B11');
+INSERT INTO sub_industry (id, name, industry) VALUES ('B113', 'Specialty Chemicals', 'B11');
+INSERT INTO sub_industry (id, name, industry) VALUES ('B121', 'Construction Materials', 'B12');
+INSERT INTO sub_industry (id, name, industry) VALUES ('B131', 'Containers & Packaging', 'B13');
+INSERT INTO sub_industry (id, name, industry) VALUES ('B141', 'Aluminum', 'B14');
+INSERT INTO sub_industry (id, name, industry) VALUES ('B142', 'Cooper', 'B14');
+INSERT INTO sub_industry (id, name, industry) VALUES ('B143', 'Gold', 'B14');
+INSERT INTO sub_industry (id, name, industry) VALUES ('B144', 'Iron & Steel', 'B14');
+INSERT INTO sub_industry (id, name, industry) VALUES ('B146', 'Diversified Metals & Minerals', 'B14');
+INSERT INTO sub_industry (id, name, industry) VALUES ('B151', 'Timber', 'B15');
+INSERT INTO sub_industry (id, name, industry) VALUES ('B152', 'Paper', 'B15');
+INSERT INTO sub_industry (id, name, industry) VALUES ('B153', 'Diversified Forest', 'B15');
+INSERT INTO sub_industry (id, name, industry) VALUES ('C121', 'Building Products & Fixtures', 'C12');
+INSERT INTO sub_industry (id, name, industry) VALUES ('C131', 'Electrical Components & Equipment', 'C13');
+INSERT INTO sub_industry (id, name, industry) VALUES ('C141', 'Construction Machinery & Heavy Vehicles', 'C14');
+INSERT INTO sub_industry (id, name, industry) VALUES ('C143', 'Industrial Machinery & Components', 'C14');
+INSERT INTO sub_industry (id, name, industry) VALUES ('C211', 'Diversified Industrial Trading', 'C21');
+INSERT INTO sub_industry (id, name, industry) VALUES ('C221', 'Commercial Printing', 'C22');
+INSERT INTO sub_industry (id, name, industry) VALUES ('C222', 'Environmental & Facilities Services', 'C22');
+INSERT INTO sub_industry (id, name, industry) VALUES ('C223', 'Office Supplies', 'C22');
+INSERT INTO sub_industry (id, name, industry) VALUES ('C224', 'Business Support Services', 'C22');
+INSERT INTO sub_industry (id, name, industry) VALUES ('C231', 'Human Resource & Employment Services', 'C23');
+INSERT INTO sub_industry (id, name, industry) VALUES ('C232', 'Research & Consulting Services', 'C23');
+INSERT INTO sub_industry (id, name, industry) VALUES ('C311', 'Multi-sector Holdings', 'C31');
+INSERT INTO sub_industry (id, name, industry) VALUES ('D111', 'Drug Retail & Distributors', 'D11');
+INSERT INTO sub_industry (id, name, industry) VALUES ('D112', 'Food Retail & Distributors', 'D11');
+INSERT INTO sub_industry (id, name, industry) VALUES ('D113', 'Supermarkets & Convenience Store', 'D11');
+INSERT INTO sub_industry (id, name, industry) VALUES ('D211', 'Liquors', 'D21');
+INSERT INTO sub_industry (id, name, industry) VALUES ('D212', 'Soft Drinks', 'D21');
+INSERT INTO sub_industry (id, name, industry) VALUES ('D221', 'Dairy Products', 'D22');
+INSERT INTO sub_industry (id, name, industry) VALUES ('D222', 'Processed Foods', 'D22');
+INSERT INTO sub_industry (id, name, industry) VALUES ('D231', 'Fish, Meat, & Poultry', 'D23');
+INSERT INTO sub_industry (id, name, industry) VALUES ('D232', 'Plantations & Crops', 'D23');
+INSERT INTO sub_industry (id, name, industry) VALUES ('D311', 'Tobacco', 'D31');
+INSERT INTO sub_industry (id, name, industry) VALUES ('D421', 'Personal Care Products', 'D42');
+INSERT INTO sub_industry (id, name, industry) VALUES ('E111', 'Auto Parts & Equipment', 'E11');
+INSERT INTO sub_industry (id, name, industry) VALUES ('E112', 'Tires', 'E11');
+INSERT INTO sub_industry (id, name, industry) VALUES ('E211', 'Home Furnishings', 'E21');
+INSERT INTO sub_industry (id, name, industry) VALUES ('E212', 'Household Appliances', 'E21');
+INSERT INTO sub_industry (id, name, industry) VALUES ('E213', 'Housewares & Specialties', 'E21');
+INSERT INTO sub_industry (id, name, industry) VALUES ('E311', 'Consumer Electronics', 'E31');
+INSERT INTO sub_industry (id, name, industry) VALUES ('E321', 'Sport Equipment & Hobbies Goods', 'E32');
+INSERT INTO sub_industry (id, name, industry) VALUES ('E411', 'Clothing, Accessories & Bags', 'E41');
+INSERT INTO sub_industry (id, name, industry) VALUES ('E412', 'Footwear', 'E41');
+INSERT INTO sub_industry (id, name, industry) VALUES ('E413', 'Textiles', 'E41');
+INSERT INTO sub_industry (id, name, industry) VALUES ('E512', 'Hotels, Resorts & Cruise Lines', 'E51');
+INSERT INTO sub_industry (id, name, industry) VALUES ('E513', 'Travel Agencies', 'E51');
+INSERT INTO sub_industry (id, name, industry) VALUES ('E514', 'Recreational & Sports Facilities', 'E51');
+INSERT INTO sub_industry (id, name, industry) VALUES ('E515', 'Restaurants', 'E51');
+INSERT INTO sub_industry (id, name, industry) VALUES ('E521', 'Education Services', 'E52');
+INSERT INTO sub_industry (id, name, industry) VALUES ('E522', 'Consumer Support Services', 'E52');
+INSERT INTO sub_industry (id, name, industry) VALUES ('E611', 'Advertising', 'E61');
+INSERT INTO sub_industry (id, name, industry) VALUES ('E612', 'Broadcasting', 'E61');
+INSERT INTO sub_industry (id, name, industry) VALUES ('E613', 'Cable & Satellite', 'E61');
+INSERT INTO sub_industry (id, name, industry) VALUES ('E614', 'Consumer Publishing', 'E61');
+INSERT INTO sub_industry (id, name, industry) VALUES ('E621', 'Entertainment & Movie Production', 'E62');
+INSERT INTO sub_industry (id, name, industry) VALUES ('E711', 'Consumer Distributors', 'E71');
+INSERT INTO sub_industry (id, name, industry) VALUES ('E731', 'Department Stores', 'E73');
+INSERT INTO sub_industry (id, name, industry) VALUES ('E731', 'Department Stores', 'E73');
+INSERT INTO sub_industry (id, name, industry) VALUES ('E741', 'Apparel & Textile Retail', 'E74');
+INSERT INTO sub_industry (id, name, industry) VALUES ('E742', 'Electronics Retail', 'E74');
+INSERT INTO sub_industry (id, name, industry) VALUES ('E743', 'Home Improvement Retail', 'E74');
+INSERT INTO sub_industry (id, name, industry) VALUES ('E745', 'Automotive Retail', 'E74');
+INSERT INTO sub_industry (id, name, industry) VALUES ('F112', 'Healthcare Supplies & Distributions', 'F11');
+INSERT INTO sub_industry (id, name, industry) VALUES ('F121', 'Healthcare Providers', 'F12');
+INSERT INTO sub_industry (id, name, industry) VALUES ('F211', 'Pharmaceuticals', 'F21');
+INSERT INTO sub_industry (id, name, industry) VALUES ('G111', 'Banks', 'G11');
+INSERT INTO sub_industry (id, name, industry) VALUES ('G211', 'Consumer Financing', 'G21');
+INSERT INTO sub_industry (id, name, industry) VALUES ('G311', 'Investment Management', 'G31');
+INSERT INTO sub_industry (id, name, industry) VALUES ('G312', 'Investment Banking & Brokerage Services', 'G31');
+INSERT INTO sub_industry (id, name, industry) VALUES ('G412', 'General Insurance', 'G41');
+INSERT INTO sub_industry (id, name, industry) VALUES ('G413', 'Life Insurance', 'G41');
+INSERT INTO sub_industry (id, name, industry) VALUES ('G414', 'Reasurance', 'G41');
+INSERT INTO sub_industry (id, name, industry) VALUES ('G511', 'Financial Holdings', 'G51');
+INSERT INTO sub_industry (id, name, industry) VALUES ('G512', 'Investment Companies', 'G51');
+INSERT INTO sub_industry (id, name, industry) VALUES ('H111', 'Real Estate Development & Management', 'H11');
+INSERT INTO sub_industry (id, name, industry) VALUES ('H112', 'Real Estate Services', 'H11');
+INSERT INTO sub_industry (id, name, industry) VALUES ('I111', 'Online Applications & Services', 'I11');
+INSERT INTO sub_industry (id, name, industry) VALUES ('I121', 'IT Services & Consulting', 'I12');
+INSERT INTO sub_industry (id, name, industry) VALUES ('I131', 'Software', 'I13');
+INSERT INTO sub_industry (id, name, industry) VALUES ('I211', 'Networking Equipment', 'I21');
+INSERT INTO sub_industry (id, name, industry) VALUES ('I221', 'Computer Hardware', 'I22');
+INSERT INTO sub_industry (id, name, industry) VALUES ('I231', 'Electronic Equipment & Instruments', 'I23');
+INSERT INTO sub_industry (id, name, industry) VALUES ('J111', 'Airport Operators', 'J11');
+INSERT INTO sub_industry (id, name, industry) VALUES ('J112', 'Highways & Railtracks', 'J11');
+INSERT INTO sub_industry (id, name, industry) VALUES ('J113', 'Marine Ports & Services', 'J11');
+INSERT INTO sub_industry (id, name, industry) VALUES ('J211', 'Heavy Constructions & Civil Engineering', 'J21');
+INSERT INTO sub_industry (id, name, industry) VALUES ('J311', 'Wired Telecommunication Service', 'J31');
+INSERT INTO sub_industry (id, name, industry) VALUES ('J312', 'Integrated Telecommunication Service', 'J31');
+INSERT INTO sub_industry (id, name, industry) VALUES ('J321', 'Wireless Telecommunication Services', 'J32');
+INSERT INTO sub_industry (id, name, industry) VALUES ('J411', 'Electric Utilities', 'J41');
+INSERT INTO sub_industry (id, name, industry) VALUES ('J421', 'Gas Utilities', 'J42');
+INSERT INTO sub_industry (id, name, industry) VALUES ('K111', 'Airlines', 'K11');
+INSERT INTO sub_industry (id, name, industry) VALUES ('K132', 'Road Transportation', 'K13');
+INSERT INTO sub_industry (id, name, industry) VALUES ('K211', 'Logistics & Deliveries', 'K21');

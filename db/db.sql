@@ -21,12 +21,26 @@ CREATE TABLE attribute (
     CONSTRAINT uq_attribute_type_code UNIQUE (type, code)
 );
 
-CREATE TABLE sector_industry (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    sector VARCHAR(100) NOT NULL,
-    industry VARCHAR(100) NOT NULL,
-    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
-    CONSTRAINT uq_sector_industry UNIQUE (sector, industry)
+CREATE TABLE sector (
+    id VARCHAR(20) PRIMARY KEY,
+    name VARCHAR(50) NOT NULL,
+    status VARCHAR(10) NOT NULL DEFAULT 'ACTIVE'
+);
+
+CREATE TABLE industry (
+    id VARCHAR(20) PRIMARY KEY,
+    name VARCHAR(50) NOT NULL,
+    sector VARCHAR(20) NOT NULL,
+    status VARCHAR(10) NOT NULL DEFAULT 'ACTIVE',
+	CONSTRAINT fk_industry_sector FOREIGN KEY (sector) REFERENCES sector (id) ON DELETE RESTRICT,
+);
+
+CREATE TABLE sub_industry (
+    id VARCHAR(20) PRIMARY KEY,
+    name VARCHAR(50) NOT NULL,
+    industry VARCHAR(20) NOT NULL,
+    status VARCHAR(10) NOT NULL DEFAULT 'ACTIVE',
+	CONSTRAINT fk_sub_industry_industry FOREIGN KEY (industry) REFERENCES industry (id) ON DELETE RESTRICT,
 );
 
 CREATE TABLE source (
@@ -42,10 +56,16 @@ CREATE TABLE stock (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     ticker VARCHAR(20) NOT NULL UNIQUE,
     name VARCHAR(255) NOT NULL UNIQUE,
+    sub_industry UUID NOT NULL,
     industry UUID NOT NULL,
+    sector UUID NOT NULL,
+    listing_date TIMESTAMPTZ NOT NULL,
+    delisted_at TIMESTAMPTZ,
     status UUID NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT fk_stock_industry FOREIGN KEY (industry) REFERENCES sector_industry (id) ON DELETE RESTRICT,
+    CONSTRAINT fk_stock_sub_industry FOREIGN KEY (sub_industry) REFERENCES sub_industry (id) ON DELETE RESTRICT,
+    CONSTRAINT fk_stock_industry FOREIGN KEY (industry) REFERENCES industry (id) ON DELETE RESTRICT,
+    CONSTRAINT fk_stock_sector FOREIGN KEY (sector) REFERENCES sector (id) ON DELETE RESTRICT,
     CONSTRAINT fk_stock_status FOREIGN KEY (status) REFERENCES attribute (id) ON DELETE RESTRICT
 );
 

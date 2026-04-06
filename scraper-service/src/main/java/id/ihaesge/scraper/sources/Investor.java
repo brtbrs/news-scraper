@@ -36,6 +36,8 @@ public class Investor extends BaseScraper implements NewsSource {
             String href = el.attr("href");
             String title = cleanText(el.text());
 
+            //<a href="/market/434116/prasyarat-berat-merger-bumn-karya" class="stretched-link">
+            //ada /corporate-action/, /stock/, /crypto/, dll, tapi jika di-click larinya ke /market"
             if (href.contains("/market/")) {
             	if (!href.startsWith("http")) {
             		href = "https://investor.id" + href;

@@ -12,7 +12,8 @@ import java.util.*;
 import com.microsoft.playwright.*;
 
 public class EmitenNews extends BaseScraper implements NewsSource {
-	private final String BASE_URL = "https://www.emitennews.com/category/emiten/";
+	private final String BASE_URL = "https://www.emitennews.com/";
+	private final String EMITEN_URL = BASE_URL + "category/emiten/";
 
     @Override
     public String getSourceName() {
@@ -21,19 +22,21 @@ public class EmitenNews extends BaseScraper implements NewsSource {
 
     @Override
     public List<ArticleItem> getArticleList(int scrapLimit) throws Exception {
-        Document doc = Jsoup.connect(BASE_URL).get();
+        Document doc = Jsoup.connect(EMITEN_URL).get();
 
         List<ArticleItem> list = new ArrayList<>();
         Set<String> seen = new HashSet<>();
 
+        //<div class="main-layout" id="headerLayout">
         Element div = doc.selectFirst("div.main-layout");
         for (Element el : div.select("a")) {
             String href = el.attr("href");
             String title = cleanText(el.text());
 
+            //<a href="https://www.emitennews.com/news/aspr-kena-suspensi-kedua-potensi-dikunci-sepekan" class="news-card-2 search-result-item">
             if (href.contains("/news/")) {
             	if (!href.startsWith("http")) {
-            		href = "https://www.emitennews.com" + href;
+            		href = BASE_URL + href;
             	}
 
             	if (!seen.contains(href)) {
@@ -141,7 +144,7 @@ public class EmitenNews extends BaseScraper implements NewsSource {
     	//be careful: – is different -
     	//be careful: \n at the end, dont forget to trim()
     	String[] PREFIX = {"EmitenNews.com -", "EmitenNews.com - ", "EmitenNews.com- ", "EmitenNews.com-"};	//must in order
-    	String[] SUFFIX = {};
+    	String[] SUFFIX = {"(*)"};
     	str.trim();
 
     	if (str != null && str.length() > 0) {

@@ -11,12 +11,12 @@ import org.jsoup.nodes.*;
 
 import com.microsoft.playwright.*;
 
-public class IPOTNews extends BaseScraper implements NewsSource {
-	private final String BASE_URL = "https://www.ipotnews.com/ipotnews/";
+public class KabarBursa extends BaseScraper implements NewsSource {
+	private final String BASE_URL = "https://www.kabarbursa.com/market-hari-ini/";
 
     @Override
     public String getSourceName() {
-        return "IPOTNEWS";
+        return "KABARBURSA";
     }
 
     @Override
@@ -26,33 +26,23 @@ public class IPOTNews extends BaseScraper implements NewsSource {
         List<ArticleItem> list = new ArrayList<>();
         Set<String> seen = new HashSet<>();
 
-        // ✅ MULTIPLE containers
-        for (Element div : doc.select("div.keeptogether")) {
+        //<div class="space-y-6">
+        Element div = doc.selectFirst("div.space-y-6");
+        for (Element el : div.select("a")) {
+            String href = el.attr("href");
+            String title = cleanText(el.text());
 
-            // ✅ MULTIPLE links inside each container
-            for (Element el : div.select("a[href]")) {
-            	String href = el.attr("href");
-                String title = cleanText(el.text());
+        	if (href.startsWith(BASE_URL)) {
+            	if (!seen.contains(href)) {
+            		seen.add(href);
 
-            	//<a href="newsDetail.php?jdl=Laba_Bersih_SGRO_di_2025_Turun_51_9___Tapi_Kas_Meroket_245_5_&news_id=215777&group_news=IPOTNEWS&taging_subtype=SGRO&name=&search=y_general&q=Prime Agri Resources&halaman=1">
-                if (href.contains("newsDetail.php")) {
-                	if (!href.startsWith("http")) {
-                		href = BASE_URL + href;
-                	}
-
-                	if (!seen.contains(href)) {
-                		seen.add(href);
-
-    	        		if (scrapLimit > 0 && list.size() >= scrapLimit) {
-    	        			break;
-    	        		} else {
-    	        			list.add(new ArticleItem(title, href, getSourceName()));	        			
-    	        		}
-                	}
-                }
+	        		if (scrapLimit > 0 && list.size() >= scrapLimit) {
+	        			break;
+	        		} else {
+	        			list.add(new ArticleItem(title, href, getSourceName()));	        			
+	        		}
+            	}
             }
-
-            if (scrapLimit > 0 && list.size() >= scrapLimit) break;
         }
 
         return list;
@@ -93,21 +83,22 @@ public class IPOTNews extends BaseScraper implements NewsSource {
     	ArticleContent articleContent = null;
         try {
         	//no need to remove noise because extraction only on specific part (selectFirst)
-            String title = cleanText(doc.selectFirst("title").text());
+//        	removeNoise(doc);
+//        	removeNoiseKataData(doc);
+
+        	//<meta property="og:title" content="SOHO Amankan Kredit BCA Rp150 Miliar, Buat Apa?">
+        	String title = cleanText(doc.selectFirst("meta[property=og:title]").attr("content"));
             LocalDateTime ldt = extractPublishDate(doc);
 
-            //<article>
-            Element article = doc.selectFirst("article");
-            String[] brs = article.html().split("<br>");
             StringBuilder content = new StringBuilder();
-
-            for (int i=0; i<brs.length; i++) {
-                if (!brs[i].contains("Sumber :")) {
-                	String clean = cleanText(brs[i]);
-                    if (!clean.isBlank()) {
-                    	content.append(clean);
-                    	content.append("\n");
-                    }
+            //<div id="articleContent" class="prose max-w-none text-gray-800 mt-6">
+            Element div = doc.selectFirst("div#articleContent");
+            for (Element p : div.select("p")) {
+            	String clean = cleanText(p.text());
+                if (clean != null &&
+                    !clean.contains("Dapatkan pengalaman membaca")) {
+                	content.append(clean);
+                    if (!clean.isBlank()) content.append("\n");
                 }
             }
 
@@ -119,13 +110,13 @@ public class IPOTNews extends BaseScraper implements NewsSource {
         return articleContent;
     }
 
-    //<meta property="article:published_time" content="2026-03-27 14:52:59">
+    //<meta property="article:published_time" content="2026-04-04T19:00:00+07:00">
     private LocalDateTime extractPublishDate(Document doc) {
         Element meta = doc.selectFirst("meta[property=article:published_time]");
         if (meta != null) {
             String publishDate = cleanText(meta.attr("content"));
 
-        	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss", new Locale("id", "ID"));
+        	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX", new Locale("id", "ID"));
         	LocalDateTime ldt = LocalDateTime.parse(publishDate, formatter);
 
         	return ldt;
@@ -134,14 +125,9 @@ public class IPOTNews extends BaseScraper implements NewsSource {
         return null;
     }
 
-//    private void removeNoiseIPOTNews(Document doc) {
+//    private void removeNoiseKabarBursa(Document doc) {
 //        String[] selectors = {
-//        		//article list
-//        		//article detail
-//                "#stockInfoContainer", "#popInfoModal", "#OneClickContainer", "#lmDanaTersediaFund", "#lmDanaTersediaStock", "#lmDanaTersediaTalangan", "#lmDanaTersediaTalanganRDPU", "#lmLimitFasilitasMin", "#lmLimitFasilitasMax", "#lmDanaTersediaTalanganFasilitasFund", "lmDanaTersediaTalanganFasilitasStockMin", "#lmDanaTersediaTalanganFasilitasStockMax", "#lmDanaTersediaTalanganFasilitasStockMax",
-//                //common
-//                "#login_modal", "#showhidebasket", "#navnews", "#navbarIpotnews", ".sidebar.sidebar-right", 
-//                "#infoLimit", "#infoOdt", "#infoMargin", "#upgradeFasilitas", "#confirmFasilitas", "#searchBarContainer"
+//                ".content-index-header", ".info-author", ".article-header-img", ".news-container.other-emiten-news-wrapper", ".recommendation-news-text"
 //        };
 //
 //        for (String sel : selectors) {
@@ -152,8 +138,8 @@ public class IPOTNews extends BaseScraper implements NewsSource {
     private String removePrefixSuffix(String str) {
     	//be careful: – is different -
     	//be careful: \n at the end, dont forget to trim()
-    	String[] PREFIX = {};	//must in order
-    	String[] SUFFIX = {"(Budi/AI)", "(Dow Jones Newswires)", "(Bloomberg/AI)", "(reuters)"};
+    	String[] PREFIX = {"KABARBURSA.COM – ", "KABARBURSA.COM –", "KABARBURSA.COM– ", "KABARBURSA.COM–"};	//must in order
+    	String[] SUFFIX = {"(*)"};
     	str.trim();
 
     	if (str != null && str.length() > 0) {

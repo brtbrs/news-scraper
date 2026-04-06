@@ -22,11 +22,13 @@ public class NewsScraperEngine {
 
                     if (content != null) {
                         results.add(content);
+                        System.out.println("*** content ***" + content.toString());
                     }
                 }
 
             } catch (Exception e) {
                 System.out.println("Error in source: " + source.getSourceName());
+            	e.printStackTrace();
             }
         }
 

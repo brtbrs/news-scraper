@@ -33,18 +33,16 @@ public class Kontan extends BaseScraper implements NewsSource {
 
             //<a href="https://investasi.kontan.co.id/news/ihsg-melemah-056-dalam-sepekan-simak-proyeksinya-untuk-senin-3032026">
             if (href.contains("/news/")) {
-            	if (!href.startsWith("http")) {
-            		href = BASE_URL + href;
-            	}
+            	if (href.startsWith(BASE_URL)) {
+                	if (!seen.contains(href)) {
+                		seen.add(href);
 
-            	if (!seen.contains(href)) {
-            		seen.add(href);
-
-	        		if (scrapLimit > 0 && list.size() >= scrapLimit) {
-	        			break;
-	        		} else {
-	        			list.add(new ArticleItem(title, href, getSourceName()));	        			
-	        		}
+    	        		if (scrapLimit > 0 && list.size() >= scrapLimit) {
+    	        			break;
+    	        		} else {
+    	        			list.add(new ArticleItem(title, href, getSourceName()));	        			
+    	        		}
+                	}
             	}
             }
         }

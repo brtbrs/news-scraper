@@ -32,11 +32,9 @@ public class KataData extends BaseScraper implements NewsSource {
             String href = el.attr("href");
             String title = cleanText(el.text());
 
-            if (href.contains("/finansial/bursa/")) {
-            	if (!href.startsWith("http")) {
-            		href = "https://katadata.co.id" + href;
-            	}
-
+            //<a href="https://katadata.co.id/finansial/bursa/69cf770c1292f/bumn-karya-kian-mengkhawatirkan-rugi-ptpp-dan-wika-bengkak-berkali-kali-lipat">
+            //if (href.contains("/finansial/bursa/")) {
+            if (href.startsWith(BASE_URL)) {
             	if (!seen.contains(href)) {
             		seen.add(href);
 

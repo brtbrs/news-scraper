@@ -32,6 +32,7 @@ public class Neraca extends BaseScraper implements NewsSource {
             String href = el.attr("href");
             String title = cleanText(el.text());
 
+            //<a href="/article/235159/antam-cetak-laba-bersih-rp-792-triliun" rel="bookmark">
             if (href.contains("article/")) {
             	if (!href.startsWith("http")) {
             		href = "https://www.neraca.co.id/" + href;
