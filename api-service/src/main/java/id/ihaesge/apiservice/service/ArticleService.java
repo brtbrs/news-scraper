@@ -20,7 +20,7 @@ public class ArticleService {
     private static final String CONTENT_TYPE = "CONTENT_TYPE";
     private static final String CONTENT_TYPE_NEWS = "NEWS";
     private static final String CONTENT_STATUS = "CONTENT_STATUS";
-    private static final String CONTENT_STATUS_NEW = "NEW";
+    private static final String CONTENT_STATUS_PENDING = "PENDING";
 
     private final ArticleRepository articleRepository;
     private final SourceRepository sourceRepository;
@@ -43,7 +43,7 @@ public class ArticleService {
 
         SourceEntity source = resolveSource(request.source());
         UUID typeId = resolveAttribute(CONTENT_TYPE, CONTENT_TYPE_NEWS);
-        UUID statusId = resolveAttribute(CONTENT_STATUS, CONTENT_STATUS_NEW);
+        UUID statusId = resolveAttribute(CONTENT_STATUS, CONTENT_STATUS_PENDING);
 
         entity.setSource(source);
         entity.setType(typeId);
