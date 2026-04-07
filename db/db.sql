@@ -32,7 +32,7 @@ CREATE TABLE industry (
     name VARCHAR(50) NOT NULL,
     sector VARCHAR(20) NOT NULL,
     status VARCHAR(10) NOT NULL DEFAULT 'ACTIVE',
-	CONSTRAINT fk_industry_sector FOREIGN KEY (sector) REFERENCES sector (id) ON DELETE RESTRICT,
+    CONSTRAINT fk_industry_sector FOREIGN KEY (sector) REFERENCES sector (id) ON DELETE RESTRICT
 );
 
 CREATE TABLE sub_industry (
@@ -40,7 +40,7 @@ CREATE TABLE sub_industry (
     name VARCHAR(50) NOT NULL,
     industry VARCHAR(20) NOT NULL,
     status VARCHAR(10) NOT NULL DEFAULT 'ACTIVE',
-	CONSTRAINT fk_sub_industry_industry FOREIGN KEY (industry) REFERENCES industry (id) ON DELETE RESTRICT,
+    CONSTRAINT fk_sub_industry_industry FOREIGN KEY (industry) REFERENCES industry (id) ON DELETE RESTRICT
 );
 
 CREATE TABLE source (
@@ -56,9 +56,9 @@ CREATE TABLE stock (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     ticker VARCHAR(20) NOT NULL UNIQUE,
     name VARCHAR(255) NOT NULL UNIQUE,
-    sub_industry UUID NOT NULL,
-    industry UUID NOT NULL,
-    sector UUID NOT NULL,
+    sub_industry VARCHAR(20) NOT NULL,
+    industry VARCHAR(20) NOT NULL,
+    sector VARCHAR(20) NOT NULL,
     listing_date TIMESTAMPTZ NOT NULL,
     delisted_at TIMESTAMPTZ,
     status UUID NOT NULL,
