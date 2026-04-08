@@ -5,6 +5,7 @@
 -- 3) use TEXT for long article content
 -- 4) add CHECK constraints for positive durations / playback speed
 -- 5) index commonly queried FK columns and timestamps
+-- 6) add NOT BLANK-like checks for critical text columns
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
@@ -47,6 +48,8 @@ CREATE TABLE source (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(150) NOT NULL UNIQUE,
     url TEXT NOT NULL UNIQUE,
+    CONSTRAINT ck_source_name_not_blank CHECK (length(trim(name)) > 0),
+    CONSTRAINT ck_source_url_not_blank CHECK (length(trim(url)) > 0),
     last_scraped_at TIMESTAMPTZ,
     active BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -96,6 +99,10 @@ CREATE TABLE content (
     original_title TEXT NOT NULL,
     original_content TEXT NOT NULL,
     original_language VARCHAR(10) NOT NULL,
+    CONSTRAINT ck_content_url_not_blank CHECK (length(trim(url)) > 0),
+    CONSTRAINT ck_content_original_title_not_blank CHECK (length(trim(original_title)) > 0),
+    CONSTRAINT ck_content_original_content_not_blank CHECK (length(trim(original_content)) > 0),
+    CONSTRAINT ck_content_original_language_not_blank CHECK (length(trim(original_language)) > 0),
     original_publish_date TIMESTAMPTZ NOT NULL,
     title_id TEXT,
     title_en TEXT,

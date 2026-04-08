@@ -1,8 +1,8 @@
 package id.ihaesge.apiservice.controller;
 
-import id.ihaesge.apiservice.dto.ArticleResponse;
-import id.ihaesge.apiservice.dto.CreateArticleRequest;
-import id.ihaesge.apiservice.service.ArticleService;
+import id.ihaesge.apiservice.dto.ContentResponse;
+import id.ihaesge.apiservice.dto.CreateContentRequest;
+import id.ihaesge.apiservice.service.ContentService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,27 +17,27 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/articles")
-public class ArticleController {
-    private final ArticleService articleService;
+@RequestMapping("/api/contents")
+public class ContentController {
+    private final ContentService contentService;
 
-    public ArticleController(ArticleService articleService) {
-        this.articleService = articleService;
+    public ContentController(ContentService contentService) {
+        this.contentService = contentService;
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ArticleResponse create(@Valid @RequestBody CreateArticleRequest request) {
-        return articleService.createArticle(request);
+    public ContentResponse create(@Valid @RequestBody CreateContentRequest request) {
+        return contentService.createContent(request);
     }
 
     @GetMapping
-    public List<ArticleResponse> getAll() {
-        return articleService.getArticles();
+    public List<ContentResponse> getAll() {
+        return contentService.getContents();
     }
 
     @GetMapping("/{id}")
-    public ArticleResponse getById(@PathVariable UUID id) {
-        return articleService.getArticle(id);
+    public ContentResponse getById(@PathVariable UUID id) {
+        return contentService.getContent(id);
     }
 }
