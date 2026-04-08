@@ -16,7 +16,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "content")
-public class ArticleEntity {
+public class ContentEntity {
     @Id
     @GeneratedValue
     @UuidGenerator
@@ -30,10 +30,10 @@ public class ArticleEntity {
     private UUID type;
 
     @Column(name = "original_title", nullable = false)
-    private String title;
+    private String originalTitle;
 
     @Column(name = "original_content", nullable = false, length = 100000)
-    private String content;
+    private String originalContent;
 
     @Column(name = "url", nullable = false, unique = true)
     private String url;
@@ -42,10 +42,10 @@ public class ArticleEntity {
     private String originalLanguage;
 
     @Column(name = "original_publish_date", nullable = false)
-    private Instant publishedAt;
+    private Instant originalPublishDate;
 
     @Column(name = "publish_date")
-    private Instant normalizedPublishedAt;
+    private Instant publishDate;
 
     @Column(name = "status", nullable = false)
     private UUID status;
@@ -64,18 +64,18 @@ public class ArticleEntity {
     public void setSource(SourceEntity source) { this.source = source; }
     public UUID getType() { return type; }
     public void setType(UUID type) { this.type = type; }
-    public String getTitle() { return title; }
-    public void setTitle(String title) { this.title = title; }
-    public String getContent() { return content; }
-    public void setContent(String content) { this.content = content; }
+    public String getOriginalTitle() { return originalTitle; }
+    public void setOriginalTitle(String originalTitle) { this.originalTitle = originalTitle; }
+    public String getOriginalContent() { return originalContent; }
+    public void setOriginalContent(String originalContent) { this.originalContent = originalContent; }
     public String getUrl() { return url; }
     public void setUrl(String url) { this.url = url; }
     public String getOriginalLanguage() { return originalLanguage; }
     public void setOriginalLanguage(String originalLanguage) { this.originalLanguage = originalLanguage; }
-    public Instant getPublishedAt() { return publishedAt; }
-    public void setPublishedAt(Instant publishedAt) { this.publishedAt = publishedAt; }
-    public Instant getNormalizedPublishedAt() { return normalizedPublishedAt; }
-    public void setNormalizedPublishedAt(Instant normalizedPublishedAt) { this.normalizedPublishedAt = normalizedPublishedAt; }
+    public Instant getOriginalPublishDate() { return originalPublishDate; }
+    public void setOriginalPublishDate(Instant originalPublishDate) { this.originalPublishDate = originalPublishDate; }
+    public Instant getPublishDate() { return publishDate; }
+    public void setPublishDate(Instant publishDate) { this.publishDate = publishDate; }
     public UUID getStatus() { return status; }
     public void setStatus(UUID status) { this.status = status; }
     public Instant getCreatedAt() { return createdAt; }

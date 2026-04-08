@@ -10,32 +10,34 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.ZoneOffset;
 
-public class ApiArticleClient {
+public class ApiContentClient {
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
-    private final String createArticleUrl;
+    private final String createContentUrl;
 
-    public ApiArticleClient(String apiBaseUrl) {
+    public ApiContentClient(String apiBaseUrl) {
         this.httpClient = HttpClient.newHttpClient();
         this.objectMapper = new ObjectMapper();
-        this.createArticleUrl = apiBaseUrl.endsWith("/")
-                ? apiBaseUrl + "articles"
-                : apiBaseUrl + "/articles";
+        this.createContentUrl = apiBaseUrl.endsWith("/")
+                ? apiBaseUrl + "contents"
+                : apiBaseUrl + "/contents";
     }
 
-    public void sendArticle(ArticleContent article) {
-        ApiArticleRequest requestBody = new ApiArticleRequest(
+    public void sendContent(ArticleContent article) {
+        ApiContentRequest requestBody = new ApiContentRequest(
                 article.source == null ? null : article.source.trim(),
                 article.title,
                 article.content,
                 article.url,
+                "id",
+                article.publishDate == null ? null : article.publishDate.atOffset(ZoneOffset.UTC).toInstant().toString(),
                 article.publishDate == null ? null : article.publishDate.atOffset(ZoneOffset.UTC).toInstant().toString()
         );
 
         try {
             String payload = objectMapper.writeValueAsString(requestBody);
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(createArticleUrl))
+                    .uri(URI.create(createContentUrl))
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(payload))
                     .build();
@@ -43,13 +45,13 @@ public class ApiArticleClient {
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
             int statusCode = response.statusCode();
             if (statusCode < 200 || statusCode >= 300) {
-                System.out.println("Failed to send article to API. status=" + statusCode + ", url=" + article.url + ", response=" + response.body());
+                System.out.println("Failed to send content to API. status=" + statusCode + ", url=" + article.url + ", response=" + response.body());
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            System.out.println("Interrupted while sending article to API for url=" + article.url + ": " + e.getMessage());
+            System.out.println("Interrupted while sending content to API for url=" + article.url + ": " + e.getMessage());
         } catch (IOException e) {
-            System.out.println("Error sending article to API for url=" + article.url + ": " + e.getMessage());
+            System.out.println("Error sending content to API for url=" + article.url + ": " + e.getMessage());
         }
     }
 }

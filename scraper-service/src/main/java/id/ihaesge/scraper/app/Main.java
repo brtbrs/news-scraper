@@ -2,7 +2,7 @@ package id.ihaesge.scraper.app;
 
 import java.util.List;
 
-import id.ihaesge.scraper.api.ApiArticleClient;
+import id.ihaesge.scraper.api.ApiContentClient;
 import id.ihaesge.scraper.core.ArticleContent;
 import id.ihaesge.scraper.engine.NewsScraperEngine;
 import id.ihaesge.scraper.sources.*;
@@ -17,11 +17,11 @@ public class Main {
         registerSources(engine);
 
         List<ArticleContent> results = engine.scrapeAll(scrapLimit);
-        ApiArticleClient apiArticleClient = new ApiArticleClient(apiBaseUrl);
+        ApiContentClient apiContentClient = new ApiContentClient(apiBaseUrl);
 
-//        System.out.println("Scraped " + results.size() + " articles. Sending to API: " + apiBaseUrl);
+//        System.out.println("Scraped " + results.size() + " content rows. Sending to API: " + apiBaseUrl);
 //        for (ArticleContent article : results) {
-//            apiArticleClient.sendArticle(article);
+//            apiContentClient.sendContent(article);
 //        }
 
         System.out.println("=== scrape run finished ===");

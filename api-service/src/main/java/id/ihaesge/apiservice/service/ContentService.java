@@ -1,45 +1,46 @@
 package id.ihaesge.apiservice.service;
 
-import id.ihaesge.apiservice.dto.ArticleResponse;
-import id.ihaesge.apiservice.dto.CreateArticleRequest;
-import id.ihaesge.apiservice.entity.ArticleEntity;
+import id.ihaesge.apiservice.dto.ContentResponse;
+import id.ihaesge.apiservice.dto.CreateContentRequest;
+import id.ihaesge.apiservice.entity.ContentEntity;
 import id.ihaesge.apiservice.entity.SourceEntity;
-import id.ihaesge.apiservice.repository.ArticleRepository;
+import id.ihaesge.apiservice.repository.ContentRepository;
 import id.ihaesge.apiservice.repository.SourceRepository;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
 @Service
-public class ArticleService {
+public class ContentService {
     private static final String CONTENT_TYPE = "CONTENT_TYPE";
     private static final String CONTENT_TYPE_NEWS = "NEWS";
     private static final String CONTENT_STATUS = "CONTENT_STATUS";
     private static final String CONTENT_STATUS_PENDING = "PENDING";
 
-    private final ArticleRepository articleRepository;
+    private final ContentRepository contentRepository;
     private final SourceRepository sourceRepository;
     private final JdbcTemplate jdbcTemplate;
 
-    public ArticleService(
-            ArticleRepository articleRepository,
+    public ContentService(
+            ContentRepository contentRepository,
             SourceRepository sourceRepository,
             JdbcTemplate jdbcTemplate
     ) {
-        this.articleRepository = articleRepository;
+        this.contentRepository = contentRepository;
         this.sourceRepository = sourceRepository;
         this.jdbcTemplate = jdbcTemplate;
     }
 
     @Transactional
-    public ArticleResponse createArticle(CreateArticleRequest request) {
-        ArticleEntity entity = articleRepository.findByUrl(request.url())
-                .orElseGet(ArticleEntity::new);
+    public ContentResponse createContent(CreateContentRequest request) {
+        ContentEntity entity = contentRepository.findByUrl(request.url())
+                .orElseGet(ContentEntity::new);
 
         SourceEntity source = resolveSource(request.source());
         UUID typeId = resolveAttribute(CONTENT_TYPE, CONTENT_TYPE_NEWS);
@@ -47,26 +48,26 @@ public class ArticleService {
 
         entity.setSource(source);
         entity.setType(typeId);
-        entity.setTitle(request.title());
-        entity.setContent(request.content());
+        entity.setOriginalTitle(request.originalTitle());
+        entity.setOriginalContent(request.originalContent());
         entity.setUrl(request.url());
-        entity.setOriginalLanguage("id");
-        entity.setPublishedAt(request.publishedAt() != null ? request.publishedAt() : java.time.Instant.now());
-        entity.setNormalizedPublishedAt(request.publishedAt());
+        entity.setOriginalLanguage(request.originalLanguage() != null ? request.originalLanguage() : "id");
+        entity.setOriginalPublishDate(request.originalPublishDate() != null ? request.originalPublishDate() : Instant.now());
+        entity.setPublishDate(request.publishDate());
         entity.setStatus(statusId);
 
-        ArticleEntity saved = articleRepository.save(entity);
+        ContentEntity saved = contentRepository.save(entity);
         return toResponse(saved);
     }
 
-    public List<ArticleResponse> getArticles() {
-        return articleRepository.findAll().stream().map(this::toResponse).toList();
+    public List<ContentResponse> getContents() {
+        return contentRepository.findAll().stream().map(this::toResponse).toList();
     }
 
-    public ArticleResponse getArticle(UUID id) {
-        ArticleEntity article = articleRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Article not found: " + id));
-        return toResponse(article);
+    public ContentResponse getContent(UUID id) {
+        ContentEntity content = contentRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Content not found: " + id));
+        return toResponse(content);
     }
 
     private SourceEntity resolveSource(String sourceName) {
@@ -104,14 +105,16 @@ public class ArticleService {
                 .replaceAll("(^-|-$)", "");
     }
 
-    private ArticleResponse toResponse(ArticleEntity entity) {
-        return new ArticleResponse(
+    private ContentResponse toResponse(ContentEntity entity) {
+        return new ContentResponse(
                 entity.getId(),
                 entity.getSource().getName(),
-                entity.getTitle(),
-                entity.getContent(),
+                entity.getOriginalTitle(),
+                entity.getOriginalContent(),
                 entity.getUrl(),
-                entity.getPublishedAt(),
+                entity.getOriginalLanguage(),
+                entity.getOriginalPublishDate(),
+                entity.getPublishDate(),
                 entity.getCreatedAt()
         );
     }
