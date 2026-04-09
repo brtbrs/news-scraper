@@ -19,10 +19,10 @@ public class Main {
         List<ArticleContent> results = engine.scrapeAll(scrapLimit);
         ApiContentClient apiContentClient = new ApiContentClient(apiBaseUrl);
 
-//        System.out.println("Scraped " + results.size() + " content rows. Sending to API: " + apiBaseUrl);
-//        for (ArticleContent article : results) {
-//            apiContentClient.sendContent(article);
-//        }
+        System.out.println("Scraped " + results.size() + " content rows. Sending to API: " + apiBaseUrl);
+        for (ArticleContent article : results) {
+            apiContentClient.sendContent(article);
+        }
 
         System.out.println("=== scrape run finished ===");
     }
@@ -30,11 +30,11 @@ public class Main {
     private static void registerSources(NewsScraperEngine engine) {
 //		engine.registerSource(new Bisnis());
 //		engine.registerSource(new CNBC());
-		engine.registerSource(new EmitenNews());
+//		engine.registerSource(new EmitenNews());
 //		engine.registerSource(new EmitenTrust());
 //		engine.registerSource(new Investor());
 //		engine.registerSource(new IPOTNews());
-//		engine.registerSource(new KabarBursa());
+		engine.registerSource(new KabarBursa());
 //		engine.registerSource(new KataData());
 //		engine.registerSource(new Kontan());
 //		engine.registerSource(new Neraca());

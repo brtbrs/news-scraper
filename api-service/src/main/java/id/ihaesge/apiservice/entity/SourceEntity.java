@@ -38,11 +38,15 @@ public class SourceEntity {
 
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
+
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
+
     public String getUrl() { return url; }
     public void setUrl(String url) { this.url = url; }
+
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }
+
     public Instant getCreatedAt() { return createdAt; }
 }

@@ -60,23 +60,33 @@ public class ContentEntity {
 
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
+
     public SourceEntity getSource() { return source; }
     public void setSource(SourceEntity source) { this.source = source; }
+
     public UUID getType() { return type; }
     public void setType(UUID type) { this.type = type; }
+
     public String getOriginalTitle() { return originalTitle; }
     public void setOriginalTitle(String originalTitle) { this.originalTitle = originalTitle; }
+
     public String getOriginalContent() { return originalContent; }
     public void setOriginalContent(String originalContent) { this.originalContent = originalContent; }
+
     public String getUrl() { return url; }
     public void setUrl(String url) { this.url = url; }
+
     public String getOriginalLanguage() { return originalLanguage; }
     public void setOriginalLanguage(String originalLanguage) { this.originalLanguage = originalLanguage; }
+
     public Instant getOriginalPublishDate() { return originalPublishDate; }
     public void setOriginalPublishDate(Instant originalPublishDate) { this.originalPublishDate = originalPublishDate; }
+
     public Instant getPublishDate() { return publishDate; }
     public void setPublishDate(Instant publishDate) { this.publishDate = publishDate; }
+
     public UUID getStatus() { return status; }
     public void setStatus(UUID status) { this.status = status; }
+
     public Instant getCreatedAt() { return createdAt; }
 }
