@@ -5,7 +5,7 @@ import java.util.*;
 public interface NewsSource {
 	String getSourceName();
 
-    List<ArticleItem> getArticleList(int scrapLimit) throws Exception;
+    List<Content> getArticleList(int scrapLimit) throws Exception;
 
-    ArticleContent getArticleContent(String url);
+    Content getContent(String url);
 }

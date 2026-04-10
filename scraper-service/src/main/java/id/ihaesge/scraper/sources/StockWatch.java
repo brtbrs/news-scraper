@@ -23,10 +23,10 @@ public class StockWatch extends BaseScraper implements NewsSource {
     }
 
     @Override
-    public List<ArticleItem> getArticleList(int scrapLimit) throws Exception {
+    public List<Content> getArticleList(int scrapLimit) throws Exception {
         Document doc = Jsoup.connect(MARKET_URL).get();
 
-        List<ArticleItem> list = new ArrayList<>();
+        List<Content> list = new ArrayList<>();
         Set<String> seen = new HashSet<>();
 
         //market
@@ -45,7 +45,7 @@ public class StockWatch extends BaseScraper implements NewsSource {
 	        		if (scrapLimit > 0 && list.size() >= scrapLimit) {
 	        			break;
 	        		} else {
-	        			list.add(new ArticleItem(title, href, getSourceName()));	        			
+	        			list.add(new Content(title, href, getSourceName()));	        			
 	        		}
 	        	}
             }
@@ -65,7 +65,7 @@ public class StockWatch extends BaseScraper implements NewsSource {
 	        		if (scrapLimit > 0 && list.size() >= scrapLimit) {
 	        			break;
 	        		} else {
-	        			list.add(new ArticleItem(title, href, getSourceName()));	        			
+	        			list.add(new Content(title, href, getSourceName()));	        			
 	        		}
 	        	}
             }
@@ -85,7 +85,7 @@ public class StockWatch extends BaseScraper implements NewsSource {
 	        		if (scrapLimit > 0 && list.size() >= scrapLimit) {
 	        			break;
 	        		} else {
-	        			list.add(new ArticleItem(title, href, getSourceName()));	        			
+	        			list.add(new Content(title, href, getSourceName()));	        			
 	        		}
 	        	}
             }
@@ -95,8 +95,8 @@ public class StockWatch extends BaseScraper implements NewsSource {
     }
 
     @Override
-    public ArticleContent getArticleContent(String url) {
-    	ArticleContent article = null;
+    public Content getContent(String url) {
+    	Content article = null;
     	try {
             Document doc = Jsoup.connect(normalizeUrl(url)).get();
             article = extractContent(url, doc);
@@ -125,8 +125,8 @@ public class StockWatch extends BaseScraper implements NewsSource {
         return article;
     }
 
-    private ArticleContent extractContent(String url, Document doc) {
-    	ArticleContent articleContent = null;
+    private Content extractContent(String url, Document doc) {
+    	Content articleContent = null;
         try {
         	//no need to remove noise because extraction only on specific part (selectFirst)
 //        	removeNoise(doc);
@@ -146,7 +146,7 @@ public class StockWatch extends BaseScraper implements NewsSource {
                 }
             }
 
-            articleContent = new ArticleContent(title, ldt, removePrefixSuffix(content.toString().trim()), url, getSourceName());
+            articleContent = new Content(title, ldt, removePrefixSuffix(content.toString().trim()), url, getSourceName());
         } catch (Exception e) {
         	e.printStackTrace();
         }

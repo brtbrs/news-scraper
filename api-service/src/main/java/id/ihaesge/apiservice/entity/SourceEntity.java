@@ -4,7 +4,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import org.hibernate.annotations.UuidGenerator;
 
@@ -28,13 +27,8 @@ public class SourceEntity {
     @Column(nullable = false)
     private boolean active = true;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false, insertable = false)
     private Instant createdAt;
-
-    @PrePersist
-    void prePersist() {
-        this.createdAt = Instant.now();
-    }
 
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }

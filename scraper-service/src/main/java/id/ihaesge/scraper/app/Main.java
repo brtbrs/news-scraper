@@ -3,7 +3,7 @@ package id.ihaesge.scraper.app;
 import java.util.List;
 
 import id.ihaesge.scraper.api.ApiContentClient;
-import id.ihaesge.scraper.core.ArticleContent;
+import id.ihaesge.scraper.core.Content;
 import id.ihaesge.scraper.engine.NewsScraperEngine;
 import id.ihaesge.scraper.sources.*;
 
@@ -16,11 +16,11 @@ public class Main {
         NewsScraperEngine engine = new NewsScraperEngine();
         registerSources(engine);
 
-        List<ArticleContent> results = engine.scrapeAll(scrapLimit);
+        List<Content> results = engine.scrapeAll(scrapLimit);
         ApiContentClient apiContentClient = new ApiContentClient(apiBaseUrl);
 
         System.out.println("\n===== scraped " + results.size() + " content rows. Now sending to API: " + apiBaseUrl + " =====");
-        for (ArticleContent article : results) {
+        for (Content article : results) {
             apiContentClient.sendContent(article);
         }
 
