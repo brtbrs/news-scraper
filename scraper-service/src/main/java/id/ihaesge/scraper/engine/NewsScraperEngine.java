@@ -10,15 +10,15 @@ public class NewsScraperEngine {
         sources.add(source);
     }
 
-    public List<ArticleContent> scrapeAll(int scrapLimit) {
-        List<ArticleContent> results = new ArrayList<>();
+    public List<Content> scrapeAll(int scrapLimit) {
+        List<Content> results = new ArrayList<>();
 
         for (NewsSource source : sources) {
             try {
-                List<ArticleItem> items = source.getArticleList(scrapLimit);
+                List<Content> items = source.getArticleList(scrapLimit);
 
-                for (ArticleItem item : items) {
-                    ArticleContent content = source.getArticleContent(item.url);
+                for (Content item : items) {
+                    Content content = source.getContent(item.url);
 
                     if (content != null) {
                         results.add(content);

@@ -1,7 +1,7 @@
 package id.ihaesge.scraper.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import id.ihaesge.scraper.core.ArticleContent;
+import id.ihaesge.scraper.core.Content;
 
 import java.io.IOException;
 import java.net.URI;
@@ -23,7 +23,7 @@ public class ApiContentClient {
                 : apiBaseUrl + "/contents";
     }
 
-    public void sendContent(ArticleContent article) {
+    public void sendContent(Content article) {
         ApiContentRequest requestBody = new ApiContentRequest(
                 article.source == null ? null : article.source.trim(),
                 article.title,

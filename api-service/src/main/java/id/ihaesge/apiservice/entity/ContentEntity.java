@@ -7,7 +7,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import org.hibernate.annotations.UuidGenerator;
 
@@ -26,8 +25,9 @@ public class ContentEntity {
     @JoinColumn(name = "source", nullable = false)
     private SourceEntity source;
 
-    @Column(name = "type", nullable = false)
-    private UUID type;
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    @JoinColumn(name = "type", nullable = false)
+    private AttributeEntity type;
 
     @Column(name = "original_title", nullable = false)
     private String originalTitle;
@@ -47,16 +47,12 @@ public class ContentEntity {
     @Column(name = "publish_date")
     private Instant publishDate;
 
-    @Column(name = "status", nullable = false)
-    private UUID status;
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    @JoinColumn(name = "status", nullable = false)
+    private AttributeEntity status;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false, insertable = false)
     private Instant createdAt;
-
-    @PrePersist
-    void prePersist() {
-        this.createdAt = Instant.now();
-    }
 
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
@@ -64,8 +60,8 @@ public class ContentEntity {
     public SourceEntity getSource() { return source; }
     public void setSource(SourceEntity source) { this.source = source; }
 
-    public UUID getType() { return type; }
-    public void setType(UUID type) { this.type = type; }
+    public AttributeEntity getType() { return type; }
+    public void setType(AttributeEntity type) { this.type = type; }
 
     public String getOriginalTitle() { return originalTitle; }
     public void setOriginalTitle(String originalTitle) { this.originalTitle = originalTitle; }
@@ -85,8 +81,8 @@ public class ContentEntity {
     public Instant getPublishDate() { return publishDate; }
     public void setPublishDate(Instant publishDate) { this.publishDate = publishDate; }
 
-    public UUID getStatus() { return status; }
-    public void setStatus(UUID status) { this.status = status; }
+    public AttributeEntity getStatus() { return status; }
+    public void setStatus(AttributeEntity status) { this.status = status; }
 
     public Instant getCreatedAt() { return createdAt; }
 }
