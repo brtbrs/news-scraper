@@ -29,16 +29,16 @@ public class ContentEntity {
     @JoinColumn(name = "type", nullable = false)
     private AttributeEntity type;
 
-    @Column(name = "original_title", nullable = false)
+    @Column(name = "original_title", nullable = false, columnDefinition = "TEXT")
     private String originalTitle;
 
-    @Column(name = "original_content", nullable = false)
+    @Column(name = "original_content", nullable = false, columnDefinition = "TEXT")
     private String originalContent;
 
-    @Column(name = "url", nullable = false, unique = true)
+    @Column(name = "url", nullable = false, unique = true, columnDefinition = "TEXT")
     private String url;
 
-    @Column(name = "original_language", nullable = false)
+    @Column(name = "original_language", nullable = false, length = 10)
     private String originalLanguage;
 
     @Column(name = "original_publish_date", nullable = false)
