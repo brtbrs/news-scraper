@@ -48,6 +48,7 @@ postgres_data/
 tmp/
 temp/
 *.tmp
+~$*.*
 
 # Node (if ever added)
 node_modules/
@@ -59,3 +60,4 @@ failsafe-reports/
 # VM crash logs
 hs_err_pid*
 replay_pid*
+

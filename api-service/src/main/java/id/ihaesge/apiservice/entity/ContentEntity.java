@@ -32,7 +32,7 @@ public class ContentEntity {
     @Column(name = "original_title", nullable = false)
     private String originalTitle;
 
-    @Column(name = "original_content", nullable = false, length = 100000)
+    @Column(name = "original_content", nullable = false)
     private String originalContent;
 
     @Column(name = "url", nullable = false, unique = true)

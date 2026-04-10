@@ -6,7 +6,6 @@ public record ApiContentRequest(
         String originalContent,
         String url,
         String originalLanguage,
-        String originalPublishDate,
-        String publishDate
+        String originalPublishDate
 ) {
 }

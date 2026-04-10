@@ -155,16 +155,18 @@ public class Kontan extends BaseScraper implements NewsSource {
     private String removePrefixSuffix(String str) {
     	//be careful: – is different -
     	//be careful: \n at the end, dont forget to trim()
-    	String[] PREFIX = {"KONTAN.CO.ID - ", "KONTAN.CO.ID- ", "KONTAN.CO.ID -", "KONTAN.CO.ID-", "JAKARTA.", "JAKARTA"};	//must in order
+    	//String[] PREFIX = {"KONTAN.CO.ID - ", "KONTAN.CO.ID- ", "KONTAN.CO.ID -", "KONTAN.CO.ID-", "JAKARTA.", "JAKARTA"};	//must in order
+    	String[] PREFIX = {"(?i)^KONTAN.CO.ID\\s*\\p{Pd}\\s*"};
     	String[] SUFFIX = {};
     	str.trim();
 
     	if (str != null && str.length() > 0) {
         	for (String s : PREFIX) {
-    	    	if (str.startsWith(s)) {
-    	    		str = str.substring(s.length()).trim();
+        		str = str.replaceFirst(s, "").trim();
+//    	    	if (str.startsWith(s)) {
+//    	    		str = str.substring(s.length()).trim();
 //    	    		break;	//dont break because maybe have multiple prefixes
-    	    	}
+//    	    	}
         	}
 
         	for (String s : SUFFIX) {

@@ -30,8 +30,7 @@ public class ApiContentClient {
                 article.content,
                 article.url,
                 "id",
-                article.publishDate == null ? null : article.publishDate.atOffset(ZoneOffset.UTC).toInstant().toString(),
-                article.publishDate == null ? null : article.publishDate.atOffset(ZoneOffset.UTC).toInstant().toString()
+                article.originalPublishDate == null ? null : article.originalPublishDate.atOffset(ZoneOffset.UTC).toInstant().toString()
         );
 
         try {
@@ -50,8 +49,10 @@ public class ApiContentClient {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             System.out.println("Interrupted while sending content to API for url=" + article.url + ": " + e.getMessage());
+            e.printStackTrace();
         } catch (IOException e) {
             System.out.println("Error sending content to API for url=" + article.url + ": " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }

@@ -10,7 +10,7 @@ import id.ihaesge.scraper.sources.*;
 public class Main {
     public static void main(String[] args) {
         int scrapLimit = readScrapeLimit(args);
-        System.out.println("=== scrape run started with limit : " + scrapLimit + " ===");
+        System.out.println("===== scrape run started with limit : " + scrapLimit + " =====");
         String apiBaseUrl = System.getenv().getOrDefault("API_BASE_URL", "http://localhost:8080/api");
 
         NewsScraperEngine engine = new NewsScraperEngine();
@@ -19,7 +19,7 @@ public class Main {
         List<ArticleContent> results = engine.scrapeAll(scrapLimit);
         ApiContentClient apiContentClient = new ApiContentClient(apiBaseUrl);
 
-        System.out.println("Scraped " + results.size() + " content rows. Sending to API: " + apiBaseUrl);
+        System.out.println("\n===== scraped " + results.size() + " content rows. Now sending to API: " + apiBaseUrl + " =====");
         for (ArticleContent article : results) {
             apiContentClient.sendContent(article);
         }

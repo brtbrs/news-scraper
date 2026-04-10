@@ -90,6 +90,7 @@ public class Investor extends BaseScraper implements NewsSource {
     }
 
     private ArticleContent extractContent(String url, Document doc) {
+//    	url = "https://investor.id/market/434726/harga-perak-antam-antm-hari-ini-jumat-10-april-2026-naikperkasa";
     	ArticleContent articleContent = null;
         try {
         	//no need to remove noise because extraction only on specific part (selectFirst)
@@ -98,22 +99,22 @@ public class Investor extends BaseScraper implements NewsSource {
 
             // DETECT MULTI-PAGE
             if (isMultiPage(doc)) {
-                String allUrl = toAllPageUrl(url);
+                url = toAllPageUrl(url);
 
                 try {
-                    doc = Jsoup.connect(allUrl).get();
-                    url = allUrl; // update reference
+                    doc = Jsoup.connect(url).get();
                 } catch (Exception e) {
                 	e.printStackTrace();
                     // fallback to original if /all fails
                 }
             }
 
-        	String title = cleanText(doc.selectFirst("title").text());
+        	String title = cleanText(doc.selectFirst("h1").text());
+        	System.out.println("title : " + title);
             LocalDateTime ldt = extractPublishDate(doc);
 
             StringBuilder content = new StringBuilder();
-            //<div class="tmpt-desk-kon" itemprop="articleBody">
+            //<div class="col fsbody2 body-content">
             Element div = doc.selectFirst("div.body-content");
             for (Element p : div.select("p")) {
             	String clean = cleanText(p.text());
@@ -178,16 +179,18 @@ public class Investor extends BaseScraper implements NewsSource {
     private String removePrefixSuffix(String str) {
     	//be careful: – is different -
     	//be careful: \n at the end, dont forget to trim()
-    	String[] PREFIX = {"JAKARTA, investor.id -", "JAKARTA, investor.id - ", "JAKARTA, investor.id- ", "JAKARTA, investor.id-", "JAKARTA, investor.id – ", "JAKARTA, investor.id –", "JAKARTA, investor.id– ", "JAKARTA, investor.id–"};	//must in order
+//    	String[] PREFIX = {"JAKARTA, investor.id -", "JAKARTA, investor.id - ", "JAKARTA, investor.id- ", "JAKARTA, investor.id-", "JAKARTA, investor.id – ", "JAKARTA, investor.id –", "JAKARTA, investor.id– ", "JAKARTA, investor.id–"};	//must in order
+    	String[] PREFIX = {"(?i)^JAKARTA\\s*,\\s*investor.id\\s*\\p{Pd}\\s*"};
     	String[] SUFFIX = {};
     	str.trim();
 
     	if (str != null && str.length() > 0) {
         	for (String s : PREFIX) {
-    	    	if (str.startsWith(s)) {
-    	    		str = str.substring(s.length()).trim();
+        		str = str.replaceFirst(s, "").trim();
+//    	    	if (str.startsWith(s)) {
+//    	    		str = str.substring(s.length()).trim();
 //    	    		break;	//dont break because maybe have multiple prefixes
-    	    	}
+//    	    	}
         	}
 
         	for (String s : SUFFIX) {

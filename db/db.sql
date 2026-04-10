@@ -212,3 +212,10 @@ CREATE INDEX idx_activity_log_user ON activity_log (user_id);
 CREATE INDEX idx_activity_log_content ON activity_log (content);
 CREATE INDEX idx_activity_log_audio ON activity_log (audio);
 CREATE INDEX idx_pipeline_log_source ON pipeline_log (source);
+
+ALTER TABLE content ALTER COLUMN original_content TYPE TEXT;
+ALTER TABLE content ALTER COLUMN original_title TYPE TEXT;
+ALTER TABLE content ALTER COLUMN original_language TYPE VARCHAR(10);
+ALTER TABLE content ALTER COLUMN url TYPE TEXT;
+
+-- SELECT column_name, data_type, character_maximum_length FROM information_schema.columns WHERE table_name = 'content';

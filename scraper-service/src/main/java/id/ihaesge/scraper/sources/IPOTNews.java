@@ -40,14 +40,17 @@ public class IPOTNews extends BaseScraper implements NewsSource {
                 		href = BASE_URL + href;
                 	}
 
-                	if (!seen.contains(href)) {
-                		seen.add(href);
+                	//identified group_news = IPOTNEWS / RESEARCHNEWS / ALLNEWS
+                	if ((href.contains("group_news=IPOTNEWS") || href.contains("group_news=RESEARCHNEWS")) && (!href.contains("taging_subtype=MARKETOVERVIEW"))) {
+                    	if (!seen.contains(href)) {
+                    		seen.add(href);
 
-    	        		if (scrapLimit > 0 && list.size() >= scrapLimit) {
-    	        			break;
-    	        		} else {
-    	        			list.add(new ArticleItem(title, href, getSourceName()));	        			
-    	        		}
+        	        		if (scrapLimit > 0 && list.size() >= scrapLimit) {
+        	        			break;
+        	        		} else {
+        	        			list.add(new ArticleItem(title, href, getSourceName()));	        			
+        	        		}
+                    	}
                 	}
                 }
             }
@@ -152,8 +155,9 @@ public class IPOTNews extends BaseScraper implements NewsSource {
     private String removePrefixSuffix(String str) {
     	//be careful: – is different -
     	//be careful: \n at the end, dont forget to trim()
-    	String[] PREFIX = {};	//must in order
-    	String[] SUFFIX = {"(Budi/AI)", "(Dow Jones Newswires)", "(Bloomberg/AI)", "(reuters)"};
+    	String[] PREFIX = {"(?i)^JAKARTA\\s*,\\s*investor.id\\s*\\p{Pd}\\s*"};;	//yes, ipot also source its news from other channels
+//    	String[] SUFFIX = {"(Budi/AI)", "(Dow Jones Newswires)", "(Bloomberg/AI)", "(reuters)"};
+    	String[] SUFFIX = {"(?i)\\s*\\(\\s*[^)]*\\s*\\)\\s*$"};
     	str.trim();
 
     	if (str != null && str.length() > 0) {
@@ -165,10 +169,11 @@ public class IPOTNews extends BaseScraper implements NewsSource {
         	}
 
         	for (String s : SUFFIX) {
-    	    	if (str.endsWith(s)) {
-	    			str = str.substring(0, str.length() - s.length()).trim();
-    	    		break;	//break because maybe have only 1 suffix
-    	    	}
+        		str = str.replaceFirst(s, "").trim();
+//    	    	if (str.endsWith(s)) {
+//	    			str = str.substring(0, str.length() - s.length()).trim();
+//    	    		break;	//break because maybe have only 1 suffix
+//    	    	}
         	}
     	}
 

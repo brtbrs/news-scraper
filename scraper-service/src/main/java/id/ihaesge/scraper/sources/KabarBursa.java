@@ -138,16 +138,19 @@ public class KabarBursa extends BaseScraper implements NewsSource {
     private String removePrefixSuffix(String str) {
     	//be careful: – is different -
     	//be careful: \n at the end, dont forget to trim()
-    	String[] PREFIX = {"KABARBURSA.COM – ", "KABARBURSA.COM –", "KABARBURSA.COM– ", "KABARBURSA.COM–"};	//must in order
+//    	String[] PREFIX = {"KABARBURSA.COM - ", "KABARBURSA.COM -", "KABARBURSA.COM- ", "KABARBURSA.COM-", 
+//    						"KABARBURSA.COM – ", "KABARBURSA.COM –", "KABARBURSA.COM– ", "KABARBURSA.COM–"};	//must in order
+    	String[] PREFIX = {"(?i)^KABARBURSA\\.C[O0]M\\s*\\p{Pd}\\s*"};
     	String[] SUFFIX = {"(*)"};
     	str.trim();
 
     	if (str != null && str.length() > 0) {
         	for (String s : PREFIX) {
-    	    	if (str.startsWith(s)) {
-    	    		str = str.substring(s.length()).trim();
+        		str = str.replaceFirst(s, "").trim();
+//    	    	if (str.startsWith(s)) {
+//    	    		str = str.substring(s.length()).trim();
 //    	    		break;	//dont break because maybe have multiple prefixes
-    	    	}
+//    	    	}
         	}
 
         	for (String s : SUFFIX) {

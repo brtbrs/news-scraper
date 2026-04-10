@@ -182,16 +182,18 @@ public class StockWatch extends BaseScraper implements NewsSource {
     private String removePrefixSuffix(String str) {
     	//be careful: – is different -
     	//be careful: \n at the end, dont forget to trim()
-    	String[] PREFIX = {"STOCKWATCH.ID (JAKARTA) – ", "STOCKWATCH.ID (JAKARTA)– ", "STOCKWATCH.ID (JAKARTA) –", "STOCKWATCH.ID (JAKARTA)–"};	//must in order
+//    	String[] PREFIX = {"STOCKWATCH.ID (JAKARTA) – ", "STOCKWATCH.ID (JAKARTA)– ", "STOCKWATCH.ID (JAKARTA) –", "STOCKWATCH.ID (JAKARTA)–"};	//must in order
+    	String[] PREFIX = {"(?i)^STOCKWATCH.ID (JAKARTA)\\s*\\p{Pd}\\s*"};
     	String[] SUFFIX = {"(konrad)"};
     	str.trim();
 
     	if (str != null && str.length() > 0) {
         	for (String s : PREFIX) {
-    	    	if (str.startsWith(s)) {
-    	    		str = str.substring(s.length()).trim();
+        		str = str.replaceFirst(s, "").trim();
+//    	    	if (str.startsWith(s)) {
+//    	    		str = str.substring(s.length()).trim();
 //    	    		break;	//dont break because maybe have multiple prefixes
-    	    	}
+//    	    	}
         	}
 
         	for (String s : SUFFIX) {

@@ -22,7 +22,7 @@ public class NewsScraperEngine {
 
                     if (content != null) {
                         results.add(content);
-                        System.out.println("*** content ***" + content.toString());
+                        System.out.println("\n***** content *****" + content.toString());
                     }
                 }
 

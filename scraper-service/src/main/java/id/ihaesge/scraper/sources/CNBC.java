@@ -33,24 +33,26 @@ public class CNBC extends BaseScraper implements NewsSource {
             // ✅ MULTIPLE links inside each container
             for (Element el : div.select("a[href]")) {
             	String href = el.attr("href");
-                String title = cleanText(el.text());
+            	if (!href.contains("video-")) {		//do not scrape if it is video news
+                    String title = cleanText(el.text());
 
-            	//<a class="group flex gap-4 items-center" href="https://www.cnbcindonesia.com/market/20260406102727-17-724106/ojk-ungkap-makna-saham-hsc-bukan-pelanggaran-tapi" dtr-evt="nhl" 
-                if (href.contains("/market/")) {
-                	if (!href.startsWith("http")) {
-                		href = BASE_URL + href;
-                	}
+                	//<a class="group flex gap-4 items-center" href="https://www.cnbcindonesia.com/market/20260406102727-17-724106/ojk-ungkap-makna-saham-hsc-bukan-pelanggaran-tapi" dtr-evt="nhl" 
+                    if (href.contains("/market/")) {
+                    	if (!href.startsWith("http")) {
+                    		href = BASE_URL + href;
+                    	}
 
-                	if (!seen.contains(href)) {
-                		seen.add(href);
+                    	if (!seen.contains(href)) {
+                    		seen.add(href);
 
-                		if (scrapLimit > 0 && list.size() >= scrapLimit) {
-    	        			break;
-    	        		} else {
-    	        			list.add(new ArticleItem(title, href, getSourceName()));	        			
-    	        		}
-                	}
-                }
+                    		if (scrapLimit > 0 && list.size() >= scrapLimit) {
+        	        			break;
+        	        		} else {
+        	        			list.add(new ArticleItem(title, href, getSourceName()));	        			
+        	        		}
+                    	}
+                    }
+            	}
             }
 
             if (scrapLimit > 0 && list.size() >= scrapLimit) break;
@@ -148,16 +150,18 @@ public class CNBC extends BaseScraper implements NewsSource {
     private String removePrefixSuffix(String str) {
     	//be careful: – is different -
     	//be careful: \n at the end, dont forget to trim()
-    	String[] PREFIX = {"Jakarta, CNBC Indonesia —", "Jakarta, CNBC Indonesia — ", "Jakarta, CNBC Indonesia— ", "Jakarta, CNBC Indonesia—"};	//must in order
+//    	String[] PREFIX = {"Jakarta, CNBC Indonesia —", "Jakarta, CNBC Indonesia — ", "Jakarta, CNBC Indonesia— ", "Jakarta, CNBC Indonesia—"};	//must in order
+    	String[] PREFIX = {"(?i)^Jakarta\\s*,\\s*CNBC Indonesia\\s*\\p{Pd}\\s*"};
     	String[] SUFFIX = {};
     	str.trim();
 
     	if (str != null && str.length() > 0) {
         	for (String s : PREFIX) {
-    	    	if (str.startsWith(s)) {
-    	    		str = str.substring(s.length()).trim();
+        		str = str.replaceFirst(s, "").trim();
+//    	    	if (str.startsWith(s)) {
+//    	    		str = str.substring(s.length()).trim();
 //    	    		break;	//dont break because maybe have multiple prefixes
-    	    	}
+//    	    	}
         	}
 
         	for (String s : SUFFIX) {
