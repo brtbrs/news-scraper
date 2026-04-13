@@ -30,7 +30,7 @@ public class ContentEntity {
     @JoinColumn(name = "type", nullable = false)
     private AttributeEntity type;
 
-    @Column(name = "original_title", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "original_title", nullable = false, length = 512)
     private String originalTitle;
 
     @Column(name = "original_content", nullable = false, columnDefinition = "TEXT")

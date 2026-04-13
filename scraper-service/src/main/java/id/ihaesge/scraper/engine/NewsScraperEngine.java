@@ -4,6 +4,7 @@ import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 import id.ihaesge.scraper.api.ApiContentClient;
+import id.ihaesge.scraper.api.ApiPipelineLogClient;
 import id.ihaesge.scraper.core.*;
 
 public class NewsScraperEngine {
@@ -16,6 +17,7 @@ public class NewsScraperEngine {
 
     public void scrapeAll(int scrapLimit, boolean fromSitemMap) {
         ApiContentClient apiContentClient = new ApiContentClient("http://localhost:8080/api");
+        ApiPipelineLogClient apiPipelineLogClient = new ApiPipelineLogClient("http://localhost:8080/api");
         String[] processedURLs = {
         		};
 
@@ -24,9 +26,10 @@ public class NewsScraperEngine {
             List<Content> saved = new ArrayList<>();
             List<String> skipped = new ArrayList<>();
             int count = 1;
+            UUID pipelineLogId = null;
 
             try {
-            	//insert new pipeline_log here
+            	pipelineLogId = apiPipelineLogClient.createStartLog(source.getSourceName());
 
                 System.out.println("===== START SCRAPING " + source.getSourceName() + " with limit : " + scrapLimit + " =====");
                 found = source.getNewsList(scrapLimit, fromSitemMap);
@@ -78,7 +81,7 @@ public class NewsScraperEngine {
             } catch (Exception e) {
             	e.printStackTrace();
             } finally {
-            	//update pipeline_log here
+            	apiPipelineLogClient.updateFinishLog(pipelineLogId, found.size(), saved.size());
 
             	//printout scraping summary
                 System.out.println("\n***** SCRAPING SUMMARY *****");
