@@ -96,7 +96,7 @@ CREATE TABLE content (
     type UUID NOT NULL,
     source UUID NOT NULL,
     url TEXT NOT NULL UNIQUE,
-    original_title TEXT NOT NULL,
+    original_title VARCHAR(512) NOT NULL,
     original_content TEXT NOT NULL,
     original_language VARCHAR(10) NOT NULL,
     original_publish_date TIMESTAMPTZ NOT NULL,
@@ -233,7 +233,7 @@ CREATE INDEX idx_pipeline_log_source ON pipeline_log (source);
 -- ALTER TABLE content DROP CONSTRAINT fk_content_duplicate;
 
 -- ALTER TABLE content ALTER COLUMN original_content TYPE TEXT;
--- ALTER TABLE content ALTER COLUMN original_title TYPE TEXT;
+-- ALTER TABLE content ALTER COLUMN original_title TYPE VARCHAR(512);
 -- ALTER TABLE content ALTER COLUMN original_language TYPE VARCHAR(10);
 -- ALTER TABLE content ALTER COLUMN url TYPE TEXT;
 
