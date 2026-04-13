@@ -15,6 +15,9 @@ public class EmitenTrust extends BaseScraper implements NewsSource {
 	private final String BASE_URL = "https://emitentrust.com/";
 	private final String MARKET_URL = BASE_URL + "category/stock-and-market/";
 	private final String AUTHOR_URL = BASE_URL + "author/";
+	private final String[] sitemap = {
+			"https://emitentrust.com/wp-sitemap-posts-post-1.xml"
+	};
 
     @Override
     public String getSourceName() {
@@ -22,7 +25,44 @@ public class EmitenTrust extends BaseScraper implements NewsSource {
     }
 
     @Override
-    public List<Content> getArticleList(int scrapLimit) throws Exception {
+    public List<Content> getNewsList(int scrapLimit, boolean fromSiteMap) throws Exception {
+    	List<Content> list = new ArrayList<>();
+
+    	if (fromSiteMap) {
+    		list = getNewsListFromSiteMap(scrapLimit);
+    	} else {
+    		list = getNewsListFromWebsite(scrapLimit);
+    	}
+
+    	return list;
+    }
+
+    //in the sitemap, all url in <loc> is not categorized, so checking will be done in getNewsDetail (checking the breadcrumb)
+    private List<Content> getNewsListFromSiteMap(int scrapLimit) throws Exception {
+    	List<Content> list = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
+
+    	for (String site : sitemap) {    		
+            Document doc = Jsoup.connect(site).get();
+
+            for (Element loc : doc.select("loc")) {
+                String href = loc.text().trim();
+	        	if (!seen.contains(href)) {
+	        		seen.add(href);
+
+	        		if (scrapLimit > 0 && list.size() >= scrapLimit) {
+	        			break;
+	        		} else {
+	        			list.add(new Content(href, getSourceName()));	        			
+	        		}
+	        	}
+            }
+    	}
+
+        return list;
+    }
+
+    private List<Content> getNewsListFromWebsite(int scrapLimit) throws Exception {
         Document doc = Jsoup.connect(MARKET_URL).get();
 
         List<Content> list = new ArrayList<>();
@@ -32,7 +72,7 @@ public class EmitenTrust extends BaseScraper implements NewsSource {
         Element div = doc.selectFirst("div#tdi_74");
         for (Element el : div.select("a")) {
             String href = el.attr("href");
-            String title = cleanText(el.text());
+//            String title = cleanText(el.text());
 
             //<a href="https://emitentrust.com/bank-mega-mega-tebar-dividen-jumbo-rp2t-ini-jadwalnya/"  rel="bookmark" 
             //<a href="https://emitentrust.com/author/komarudin/">
@@ -43,7 +83,7 @@ public class EmitenTrust extends BaseScraper implements NewsSource {
 	        		if (scrapLimit > 0 && list.size() >= scrapLimit) {
 	        			break;
 	        		} else {
-	        			list.add(new Content(title, href, getSourceName()));	        			
+	        			list.add(new Content(href, getSourceName()));	        			
 	        		}
 	        	}
             }
@@ -53,7 +93,7 @@ public class EmitenTrust extends BaseScraper implements NewsSource {
         div = doc.selectFirst("div#tdi_80");
         for (Element el : div.select("a")) {
             String href = el.attr("href");
-            String title = cleanText(el.text());
+//            String title = cleanText(el.text());
 
             if (href.contains(BASE_URL) && !href.startsWith(MARKET_URL) && !href.startsWith(AUTHOR_URL)) {
 	        	if (!seen.contains(href)) {
@@ -62,7 +102,7 @@ public class EmitenTrust extends BaseScraper implements NewsSource {
 	        		if (scrapLimit > 0 && list.size() >= scrapLimit) {
 	        			break;
 	        		} else {
-	        			list.add(new Content(title, href, getSourceName()));	        			
+	        			list.add(new Content(href, getSourceName()));	        			
 	        		}
 	        	}
             }
@@ -73,34 +113,49 @@ public class EmitenTrust extends BaseScraper implements NewsSource {
     }
 
     @Override
-    public Content getContent(String url) {
-    	Content article = null;
+    public Content getNewsDetail(String url) {
+    	Content content = null;
     	try {
             Document doc = Jsoup.connect(normalizeUrl(url)).get();
-            article = extractContent(url, doc);
 
-            if (article == null) {
-                System.out.println("[" + getSourceName() + "] Playwright fallback: " + url);
-                Playwright pw = Playwright.create();
-                Browser browser = pw.chromium().launch(
-                		new BrowserType.LaunchOptions().setHeadless(true)
-                );
+        	//only extract the content if the category == "Market", check the breadcrumb
+            //<a title="" class="tdb-entry-crumb">
+        	boolean stockAndMarket = false;
+        	for (Element breadcumb : doc.select("a.tdb-entry-crumb")) {
+        		String href = breadcumb.attr("href");
+        		if (href.contains("/category/stock-and-market/")) {
+        			stockAndMarket = true;
+        			break;
+        		}
+        	}
 
-                Page page = browser.newPage();
-                page.navigate(normalizeUrl(url));
-                page.waitForTimeout(2000);
+        	if (stockAndMarket) {
+        		content = extractContent(url, doc);
 
-                doc = Jsoup.parse(page.content());
-                article = extractContent(url, doc);
-                page.close();
-                browser.close();
-            }
+//                if (content == null) {
+//                    System.out.println("[" + getSourceName() + "] Playwright fallback: " + url);
+//                    Playwright pw = Playwright.create();
+//                    Browser browser = pw.chromium().launch(
+//                    		new BrowserType.LaunchOptions().setHeadless(true)
+//                    );
+//
+//                    Page page = browser.newPage();
+//                    page.navigate(normalizeUrl(url));
+//                    page.waitForTimeout(2000);
+//
+//                    doc = Jsoup.parse(page.content());
+//                    content = extractContent(url, doc);
+//                    page.close();
+//                    browser.close();
+//                }
+        	}
+
     	} catch (Exception e) {
 			// TODO: handle exception
     		e.printStackTrace();
 		}
 
-        return article;
+        return content;
     }
 
     private Content extractContent(String url, Document doc) {
@@ -114,18 +169,18 @@ public class EmitenTrust extends BaseScraper implements NewsSource {
         	String title = cleanText(doc.selectFirst("meta[property=og:title]").attr("content"));
             LocalDateTime ldt = extractPublishDate(doc);
 
-            StringBuilder content = new StringBuilder();
+            StringBuilder sb = new StringBuilder();
             for (Element p : doc.select("p")) {
             	String clean = cleanText(p.text());
                 if (clean != null && 
 //                    !clean.contains("Emitentrust.com ") && 
                     !clean.contains("- EmitenTrust")) {
-                	content.append(clean);
-                    if (!clean.isBlank()) content.append("\n");
+                	sb.append(clean);
+                    if (!clean.isBlank()) sb.append("\n");
                 }
             }
 
-            articleContent = new Content(title, ldt, removePrefixSuffix(content.toString().trim()), url, getSourceName());
+            articleContent = new Content(title, ldt, removePrefixSuffix(sb.toString().trim()), url, getSourceName());
         } catch (Exception e) {
         	e.printStackTrace();
         }

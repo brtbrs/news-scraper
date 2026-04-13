@@ -8,6 +8,7 @@ import java.util.*;
 
 import org.jsoup.*;
 import org.jsoup.nodes.*;
+import org.jsoup.select.Elements;
 
 import com.microsoft.playwright.*;
 
@@ -17,13 +18,64 @@ public class StockWatch extends BaseScraper implements NewsSource {
 	private final String MARKET_URL = BASE_URL + "category/market/";
 	private final String AUTHOR_URL = BASE_URL + "author/";
 
+	private final String[] sitemap = {
+//			"https://stockwatch.id/wp-sitemap-posts-post-1.xml",		//done
+//			"https://stockwatch.id/wp-sitemap-posts-post-2.xml",		//done
+//			"https://stockwatch.id/wp-sitemap-posts-post-3.xml",		//done
+//			"https://stockwatch.id/wp-sitemap-posts-post-4.xml",		//done
+//			"https://stockwatch.id/wp-sitemap-posts-post-5.xml",		//done
+//			"https://stockwatch.id/wp-sitemap-posts-post-6.xml",		//done
+//			"https://stockwatch.id/wp-sitemap-posts-post-7.xml",		//done
+//			"https://stockwatch.id/wp-sitemap-posts-post-8.xml",		//done
+//			"https://stockwatch.id/wp-sitemap-posts-post-9.xml",		//done
+//			"https://stockwatch.id/wp-sitemap-posts-post-10.xml"		//done
+			};
+
     @Override
     public String getSourceName() {
         return "STOCKWATCH";
     }
 
     @Override
-    public List<Content> getArticleList(int scrapLimit) throws Exception {
+    public List<Content> getNewsList(int scrapLimit, boolean fromSiteMap) throws Exception {
+    	List<Content> list = new ArrayList<>();
+
+    	if (fromSiteMap) {
+    		list = getNewsListFromSiteMap(scrapLimit);
+    	} else {
+    		list = getNewsListFromWebsite(scrapLimit);
+    	}
+
+    	return list;
+    }
+
+    //in the sitemap, all url in <loc> is not categorized, so checking will be done in getNewsDetail (checking the breadcrumb)
+    private List<Content> getNewsListFromSiteMap(int scrapLimit) throws Exception {
+    	List<Content> list = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
+
+    	for (String site : sitemap) {
+    		
+            Document doc = Jsoup.connect(site).get();
+            for (Element url : doc.select("url")) {
+                String href = url.selectFirst("loc").text().trim();
+
+	        	if (!seen.contains(href)) {
+	        		seen.add(href);
+
+	        		if (scrapLimit > 0 && list.size() >= scrapLimit) {
+	        			break;
+	        		} else {
+	        			list.add(new Content(href, getSourceName()));	        			
+	        		}
+	        	}
+            }
+    	}
+
+        return list;
+    }
+
+    private List<Content> getNewsListFromWebsite(int scrapLimit) throws Exception {
         Document doc = Jsoup.connect(MARKET_URL).get();
 
         List<Content> list = new ArrayList<>();
@@ -34,7 +86,7 @@ public class StockWatch extends BaseScraper implements NewsSource {
         Element div = doc.selectFirst("div#tdi_91");
         for (Element el : div.select("a")) {
             String href = el.attr("href");
-            String title = cleanText(el.attr("title"));
+//            String title = cleanText(el.attr("title"));
 
             //<a href="https://stockwatch.id/bidik-pasar-digital-usd-29-miliar-dssa-garap-proyek-panas-bumi-hingga-infrastruktur-ai/"  rel="bookmark" 
             //<a href="https://stockwatch.id/author/daiz/">
@@ -45,7 +97,7 @@ public class StockWatch extends BaseScraper implements NewsSource {
 	        		if (scrapLimit > 0 && list.size() >= scrapLimit) {
 	        			break;
 	        		} else {
-	        			list.add(new Content(title, href, getSourceName()));	        			
+	        			list.add(new Content(href, getSourceName()));	        			
 	        		}
 	        	}
             }
@@ -56,7 +108,7 @@ public class StockWatch extends BaseScraper implements NewsSource {
         div = doc.selectFirst("div#tdi_97");
         for (Element el : div.select("a")) {
             String href = el.attr("href");
-            String title = cleanText(el.attr("title"));
+//            String title = cleanText(el.attr("title"));
 
             if (href.contains(BASE_URL) && !href.startsWith(MARKET_URL) && !href.startsWith(AUTHOR_URL)) {
 	        	if (!seen.contains(href)) {
@@ -65,7 +117,7 @@ public class StockWatch extends BaseScraper implements NewsSource {
 	        		if (scrapLimit > 0 && list.size() >= scrapLimit) {
 	        			break;
 	        		} else {
-	        			list.add(new Content(title, href, getSourceName()));	        			
+	        			list.add(new Content(href, getSourceName()));	        			
 	        		}
 	        	}
             }
@@ -76,7 +128,7 @@ public class StockWatch extends BaseScraper implements NewsSource {
         div = doc.selectFirst("div#tdi_33");
         for (Element el : div.select("a")) {
             String href = el.attr("href");
-            String title = cleanText(el.attr("title"));
+//            String title = cleanText(el.attr("title"));
 
             if (href.contains(BASE_URL) && !href.startsWith(FINANSIAL_URL) && !href.startsWith(AUTHOR_URL)) {
 	        	if (!seen.contains(href)) {
@@ -85,7 +137,7 @@ public class StockWatch extends BaseScraper implements NewsSource {
 	        		if (scrapLimit > 0 && list.size() >= scrapLimit) {
 	        			break;
 	        		} else {
-	        			list.add(new Content(title, href, getSourceName()));	        			
+	        			list.add(new Content(href, getSourceName()));	        			
 	        		}
 	        	}
             }
@@ -95,34 +147,50 @@ public class StockWatch extends BaseScraper implements NewsSource {
     }
 
     @Override
-    public Content getContent(String url) {
-    	Content article = null;
+    public Content getNewsDetail(String url) {
+    	Content content = null;
     	try {
             Document doc = Jsoup.connect(normalizeUrl(url)).get();
-            article = extractContent(url, doc);
 
-            if (article == null) {
-                System.out.println("[" + getSourceName() + "] Playwright fallback: " + url);
-                Playwright pw = Playwright.create();
-                Browser browser = pw.chromium().launch(
-                		new BrowserType.LaunchOptions().setHeadless(true)
-                );
+        	//only extract the content if the category == "Market", check the breadcrumb
+        	//<a title="Lihat semua kiriman dalam Market" class="tdb-entry-crumb">
+        	boolean marketOrFinancial = false;
+        	for (Element breadcumb : doc.select("a.tdb-entry-crumb")) {
+        		String href = breadcumb.attr("href");
+        		if (href.contains("market") || href.contains("finansial")) {
+        			marketOrFinancial = true;
+        			break;
+        		}
+        	}
 
-                Page page = browser.newPage();
-                page.navigate(normalizeUrl(url));
-                page.waitForTimeout(2000);
+        	if (marketOrFinancial) {
+                content = extractContent(url, doc);
 
-                doc = Jsoup.parse(page.content());
-                article = extractContent(url, doc);
-                page.close();
-                browser.close();
-            }
+                if (content == null) {
+                    System.out.println("[" + getSourceName() + "] Playwright fallback: " + url);
+                    Playwright pw = Playwright.create();
+                    Browser browser = pw.chromium().launch(
+                    		new BrowserType.LaunchOptions().setHeadless(true)
+                    );
+
+                    Page page = browser.newPage();
+                    page.navigate(normalizeUrl(url));
+                    page.waitForTimeout(2000);
+
+                    doc = Jsoup.parse(page.content());
+                    content = extractContent(url, doc);
+                    page.close();
+                    browser.close();
+                }
+        	} else {
+        		content = new Content("NOT MARKET CATEGORY", url, "STOCKWATCH");
+        	}
     	} catch (Exception e) {
 			// TODO: handle exception
     		e.printStackTrace();
 		}
 
-        return article;
+        return content;
     }
 
     private Content extractContent(String url, Document doc) {
@@ -135,18 +203,28 @@ public class StockWatch extends BaseScraper implements NewsSource {
         	String title = cleanText(doc.selectFirst("meta[property=og:title]").attr("content"));
             LocalDateTime ldt = extractPublishDate(doc);
 
-            StringBuilder content = new StringBuilder();
+            StringBuilder sb = new StringBuilder();
+            //from website
             //<p style="text-align: justify">
-            for (Element p : doc.select("p[style*=justify]")) {
+            //for (Element p : doc.select("p[style*=justify]")) {
+
+            //from site map
+            //1. <p>, 2. <p style="text-align: justify;">, 3. <p class="entry-title td-module-title">
+            //4. <p style="font-weight: 400;"> 
+            //5. <p class="p1"> 6. <p class="p2"> 7. <p class="p3"> 8. <p class="s3"> 9. <p class="s6"> 9. <p class="s7"> 9. <p class="s9"> 9. <p class="s11"> 9. <p class="s12"> 10. <p class="s14"> 11. <p class="s13"> 12. <p class="s15"> 12. <p class="s16"> 13. 
+            //13. <div> 14. <div class="s18"> 15. <div dir="ltr" style="text-align: justify;">
+            //16. <p class="gmail-MsoNoSpacing"> 17. <p class="ng-star-inserted">
+            Elements elements = doc.select("p:not([*]), p[style*=justify], p[style*=font-weight], p.p1, p.p2, p.p3, p.s3, p.s6, p.s7, p.s9, p.s11, p.s12, p.s13, p.s14, p.s15, p.s16, p.gmail-MsoNoSpacing, p.ng-star-inserted, div:not([*]), div.s18, div[style*=justify]");
+            for (Element p : elements) {
             	String clean = cleanText(p.text());
                 if (clean != null &&
                         !clean.contains("Disclaimer: ")) {
-                	content.append(clean);
-                    if (!clean.isBlank()) content.append("\n");
+                	sb.append(clean);
+                    if (!clean.isBlank()) sb.append("\n");
                 }
             }
 
-            articleContent = new Content(title, ldt, removePrefixSuffix(content.toString().trim()), url, getSourceName());
+            articleContent = new Content(title, ldt, removePrefixSuffix(sb.toString().trim()), url, getSourceName());
         } catch (Exception e) {
         	e.printStackTrace();
         }
@@ -182,9 +260,18 @@ public class StockWatch extends BaseScraper implements NewsSource {
     private String removePrefixSuffix(String str) {
     	//be careful: – is different -
     	//be careful: \n at the end, dont forget to trim()
-//    	String[] PREFIX = {"STOCKWATCH.ID (JAKARTA) – ", "STOCKWATCH.ID (JAKARTA)– ", "STOCKWATCH.ID (JAKARTA) –", "STOCKWATCH.ID (JAKARTA)–"};	//must in order
-    	String[] PREFIX = {"(?i)^STOCKWATCH.ID (JAKARTA)\\s*\\p{Pd}\\s*"};
-    	String[] SUFFIX = {"(konrad)"};
+    	String[] PREFIX = {
+    			"(?i)^STOCKWATCH\\.ID\\s*\\(\\s*[^)]*\\s*\\)\\s*\\p{Pd}\\s*",		//"STOCKWATCH.ID (JAKARTA) – "
+    			"(?i)^STOCKWATCH\\.ID,\\s*[^\\p{Pd}]+\\s*\\p{Pd}\\s*", 				//"STOCKWATCH.ID, Jakarta – "
+    			"(?i)^STOCKWATCH\\.ID\\s*\\p{Pd}\\s*.*?\\s*\\p{Pd}\\s*", 			//"StockWatch.Id - Jakarta - "
+    			"(?i)^STOCKWATCH\\.\\s*ID\\s*\\(\\s*[^)]*\\s*\\)\\s*\\p{Pd}\\s*", 	//"STOCKWATCH. ID (JAKARTA) – "
+    			"(?i)^STOCWATCH\\.ID\\s*\\(\\s*[^)]*\\s*\\)\\s*\\p{Pd}\\s*",		//"STOCWATCH.ID (JAKARTA) – "
+    			"(?i)^STOCKATCH\\.ID\\s*\\(\\s*[^)]*\\s*\\)\\s*\\p{Pd}\\s*",		//"STOCKATCH.ID (JAKARTA) – "
+    			"(?i)^STOCKWTATCH\\.ID\\s*\\(\\s*[^)]*\\s*\\)\\s*\\p{Pd}\\s*"		//"STOCKWTATCH.ID (JAKARTA) – "
+    			};
+
+//    	String[] SUFFIX = {"(konrad)"};
+    	String[] SUFFIX = {"(?i)\\(\\s*[^)]*\\s*\\)\\s*$"};
     	str.trim();
 
     	if (str != null && str.length() > 0) {
@@ -197,10 +284,11 @@ public class StockWatch extends BaseScraper implements NewsSource {
         	}
 
         	for (String s : SUFFIX) {
-    	    	if (str.endsWith(s)) {
-	    			str = str.substring(0, str.length() - s.length()).trim();
-    	    		break;	//break because maybe have only 1 suffix
-    	    	}
+        		str = str.replaceFirst(s, "").trim();
+//    	    	if (str.endsWith(s)) {
+//	    			str = str.substring(0, str.length() - s.length()).trim();
+//    	    		break;	//break because maybe have only 1 suffix
+//    	    	}
         	}
     	}
 

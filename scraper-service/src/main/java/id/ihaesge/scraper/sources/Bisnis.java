@@ -20,7 +20,27 @@ public class Bisnis extends BaseScraper implements NewsSource {
     }
 
     @Override
-    public List<Content> getArticleList(int scrapLimit) throws Exception {
+    public List<Content> getNewsList(int scrapLimit, boolean fromSiteMap) throws Exception {
+    	List<Content> list = new ArrayList<>();
+
+    	if (fromSiteMap) {
+    		list = getNewsListFromSiteMap(scrapLimit);
+    	} else {
+    		list = getNewsListFromWebsite(scrapLimit);
+    	}
+
+    	return list;
+    }
+
+    private List<Content> getNewsListFromSiteMap(int scrapLimit) throws Exception {
+    	List<Content> list = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
+
+
+        return list;
+    }
+
+    private List<Content> getNewsListFromWebsite(int scrapLimit) throws Exception {
         Document doc = Jsoup.connect(BASE_URL).get();
 
         List<Content> list = new ArrayList<>();
@@ -30,14 +50,14 @@ public class Bisnis extends BaseScraper implements NewsSource {
         for (Element div : doc.select("div.artContent")) {
         	Element el = div.selectFirst("a[href]");
             String href = el.attr("href");
-            String title = cleanText(el.text());
+//            String title = cleanText(el.text());
 
-            // Bisnis pattern
+            //only get "market" category
             //<a href="https://market.bisnis.com/read/20260329/192/1962766/menilik-postur-keuangan-di-balik-rekor-laba-hartadinata-hrta-sepanjang-2025" class="artLink">
-            if (href.contains("/read/")) {
-            	if (!href.startsWith("http")) {
-            		href = "https://market.bisnis.com" + href;
-            	}
+            if (href.startsWith("https://market.bisnis.com/read/")) {
+//            	if (!href.startsWith("https://market.bisnis.com/read/")) {
+//            		href = "https://market.bisnis.com" + href;
+//            	}
 
                 if (!seen.contains(href)) {
                     seen.add(href);
@@ -45,7 +65,7 @@ public class Bisnis extends BaseScraper implements NewsSource {
 	        		if (scrapLimit > 0 && list.size() >= scrapLimit) {
 	        			break;
 	        		} else {
-	        			list.add(new Content(title, href, getSourceName()));	        			
+	        			list.add(new Content(href, getSourceName()));	        			
 	        		}
                 }
             }
@@ -55,13 +75,13 @@ public class Bisnis extends BaseScraper implements NewsSource {
     }
 
     @Override
-    public Content getContent(String url) {
-    	Content article = null;
+    public Content getNewsDetail(String url) {
+    	Content content = null;
     	try {
             Document doc = Jsoup.connect(normalizeUrl(url)).get();
-            article = extractContent(url, doc);
+            content = extractContent(url, doc);
 
-            if (article == null) {
+            if (content == null) {
                 System.out.println("[" + getSourceName() + "] Playwright fallback: " + url);
                 Playwright pw = Playwright.create();
                 Browser browser = pw.chromium().launch(
@@ -73,7 +93,7 @@ public class Bisnis extends BaseScraper implements NewsSource {
                 page.waitForTimeout(2000);
 
                 doc = Jsoup.parse(page.content());
-                article = extractContent(url, doc);
+                content = extractContent(url, doc);
                 page.close();
                 browser.close();
             }
@@ -82,7 +102,7 @@ public class Bisnis extends BaseScraper implements NewsSource {
     		e.printStackTrace();
 		}
 
-        return article;
+        return content;
     }
 
     private Content extractContent(String url, Document doc) {
@@ -95,20 +115,20 @@ public class Bisnis extends BaseScraper implements NewsSource {
         	String title = cleanText(doc.selectFirst("title").text());
             LocalDateTime ldt = extractPublishDate(doc);
 
-            StringBuilder content = new StringBuilder();
+            StringBuilder sb = new StringBuilder();
             //<article class="detailsContent force-17 mt40">
             Element div = doc.selectFirst("article.detailsContent");
             for (Element p : div.select("p")) {
             	String clean = cleanText(p.text());
                 if (clean != null &&
-//                		!clean.contains("Bisnis.com, ") && 
+                		!clean.contains("Disclaimer") && 
                 		!clean.contains("Baca Juga")) {
-                    content.append(clean);
-                    if (!clean.isBlank()) content.append("\n");
+                    sb.append(clean);
+                    if (!clean.isBlank()) sb.append("\n");
                 }
             }
 
-            articleContent = new Content(title, ldt, removePrefixSuffix(content.toString().trim()), url, getSourceName());
+            articleContent = new Content(title, ldt, removePrefixSuffix(sb.toString().trim()), url, getSourceName());
         } catch (Exception e) {
         	e.printStackTrace();
         }

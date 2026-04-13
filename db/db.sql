@@ -99,11 +99,30 @@ CREATE TABLE content (
     original_title TEXT NOT NULL,
     original_content TEXT NOT NULL,
     original_language VARCHAR(10) NOT NULL,
+    original_publish_date TIMESTAMPTZ NOT NULL,
     CONSTRAINT ck_content_url_not_blank CHECK (length(trim(url)) > 0),
     CONSTRAINT ck_content_original_title_not_blank CHECK (length(trim(original_title)) > 0),
     CONSTRAINT ck_content_original_content_not_blank CHECK (length(trim(original_content)) > 0),
     CONSTRAINT ck_content_original_language_not_blank CHECK (length(trim(original_language)) > 0),
-    original_publish_date TIMESTAMPTZ NOT NULL,
+    title_id TEXT,		--drop
+    title_en TEXT,		--drop
+    content_id TEXT,	--drop
+    content_en TEXT,	--drop
+    sentiment UUID,		--drop
+    duplicate UUID,		--drop
+    publish_date TIMESTAMPTZ,	--drop
+    status UUID NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT fk_content_type FOREIGN KEY (type) REFERENCES attribute (id) ON DELETE RESTRICT,
+    CONSTRAINT fk_content_source FOREIGN KEY (source) REFERENCES source (id) ON DELETE CASCADE,
+    CONSTRAINT fk_content_sentiment FOREIGN KEY (sentiment) REFERENCES attribute (id) ON DELETE RESTRICT,
+    CONSTRAINT fk_content_duplicate FOREIGN KEY (duplicate) REFERENCES content (id) ON DELETE SET NULL,
+    CONSTRAINT fk_content_status FOREIGN KEY (status) REFERENCES attribute (id) ON DELETE RESTRICT
+);
+
+CREATE TABLE content_ai (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    content UUID NOT NULL,
     title_id TEXT,
     title_en TEXT,
     content_id TEXT,
@@ -113,8 +132,6 @@ CREATE TABLE content (
     publish_date TIMESTAMPTZ,
     status UUID NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT fk_content_type FOREIGN KEY (type) REFERENCES attribute (id) ON DELETE RESTRICT,
-    CONSTRAINT fk_content_source FOREIGN KEY (source) REFERENCES source (id) ON DELETE CASCADE,
     CONSTRAINT fk_content_sentiment FOREIGN KEY (sentiment) REFERENCES attribute (id) ON DELETE RESTRICT,
     CONSTRAINT fk_content_duplicate FOREIGN KEY (duplicate) REFERENCES content (id) ON DELETE SET NULL,
     CONSTRAINT fk_content_status FOREIGN KEY (status) REFERENCES attribute (id) ON DELETE RESTRICT
@@ -200,6 +217,7 @@ CREATE INDEX idx_stock_status ON stock (status);
 CREATE INDEX idx_content_type ON content (type);
 CREATE INDEX idx_content_source ON content (source);
 CREATE INDEX idx_content_status ON content (status);
+CREATE INDEX idx_content_url ON content (url);
 CREATE INDEX idx_content_sentiment ON content (sentiment);
 CREATE INDEX idx_content_publish_date ON content (publish_date);
 CREATE INDEX idx_content_original_publish_date ON content (original_publish_date);
@@ -213,9 +231,9 @@ CREATE INDEX idx_activity_log_content ON activity_log (content);
 CREATE INDEX idx_activity_log_audio ON activity_log (audio);
 CREATE INDEX idx_pipeline_log_source ON pipeline_log (source);
 
-ALTER TABLE content ALTER COLUMN original_content TYPE TEXT;
-ALTER TABLE content ALTER COLUMN original_title TYPE TEXT;
-ALTER TABLE content ALTER COLUMN original_language TYPE VARCHAR(10);
-ALTER TABLE content ALTER COLUMN url TYPE TEXT;
+-- ALTER TABLE content ALTER COLUMN original_content TYPE TEXT;
+-- ALTER TABLE content ALTER COLUMN original_title TYPE TEXT;
+-- ALTER TABLE content ALTER COLUMN original_language TYPE VARCHAR(10);
+-- ALTER TABLE content ALTER COLUMN url TYPE TEXT;
 
 -- SELECT column_name, data_type, character_maximum_length FROM information_schema.columns WHERE table_name = 'content';

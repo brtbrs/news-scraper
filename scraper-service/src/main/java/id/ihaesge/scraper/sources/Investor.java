@@ -17,7 +17,12 @@ import java.util.*;
 import java.util.regex.*;
 
 public class Investor extends BaseScraper implements NewsSource {
-    private final String BASE_URL = "https://investor.id/market/";
+    private final String BASE_URL = "https://investor.id";
+    private final String MARKET_URL = BASE_URL + "/market/";
+	private final String[] sitemap = {
+//			"https://investor.id/sitemap_news.xml",		//done
+//			"https://investor.id/sitemap_post.xml"		//done
+	};
 
     @Override
     public String getSourceName() {
@@ -25,8 +30,47 @@ public class Investor extends BaseScraper implements NewsSource {
     }
 
     @Override
-    public List<Content> getArticleList(int scrapLimit) throws Exception {
-        Document doc = Jsoup.connect(BASE_URL).get();
+    public List<Content> getNewsList(int scrapLimit, boolean fromSiteMap) throws Exception {
+    	List<Content> list = new ArrayList<>();
+
+    	if (fromSiteMap) {
+    		list = getNewsListFromSiteMap(scrapLimit);
+    	} else {
+    		list = getNewsListFromWebsite(scrapLimit);
+    	}
+
+    	return list;
+    }
+
+    //in the sitemap, all url in <loc> is categorized, so checking will be done here
+    private List<Content> getNewsListFromSiteMap(int scrapLimit) throws Exception {
+    	List<Content> list = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
+
+    	for (String site : sitemap) {    		
+            Document doc = Jsoup.connect(site).get();
+
+            for (Element loc : doc.select("loc")) {
+                String href = loc.text().trim();
+            	if (href.contains("/market/")) {
+    	        	if (!seen.contains(href)) {
+    	        		seen.add(href);
+
+    	        		if (scrapLimit > 0 && list.size() >= scrapLimit) {
+    	        			break;
+    	        		} else {
+    	        			list.add(new Content(href, getSourceName()));	        			
+    	        		}
+    	        	}
+            	}
+            }
+    	}
+
+        return list;
+    }
+
+    private List<Content> getNewsListFromWebsite(int scrapLimit) throws Exception {
+        Document doc = Jsoup.connect(MARKET_URL).get();
 
         List<Content> list = new ArrayList<>();
         Set<String> seen = new HashSet<>();
@@ -34,13 +78,13 @@ public class Investor extends BaseScraper implements NewsSource {
         Element div = doc.selectFirst("main");
         for (Element el : div.select("a")) {
             String href = el.attr("href");
-            String title = cleanText(el.text());
+//            String title = cleanText(el.text());
 
             //<a href="/market/434116/prasyarat-berat-merger-bumn-karya" class="stretched-link">
             //ada /corporate-action/, /stock/, /crypto/, dll, tapi jika di-click larinya ke /market"
             if (href.contains("/market/")) {
             	if (!href.startsWith("http")) {
-            		href = "https://investor.id" + href;
+            		href = BASE_URL + href;
             	}
 
             	if (!seen.contains(href)) {
@@ -49,7 +93,7 @@ public class Investor extends BaseScraper implements NewsSource {
 	        		if (scrapLimit > 0 && list.size() >= scrapLimit) {
 	        			break;
 	        		} else {
-	        			list.add(new Content(title, href, getSourceName()));	        			
+	        			list.add(new Content(href, getSourceName()));	        			
 	        		}
             	}
             }
@@ -59,13 +103,13 @@ public class Investor extends BaseScraper implements NewsSource {
     }
 
     @Override
-    public Content getContent(String url) {
-    	Content article = null;
+    public Content getNewsDetail(String url) {
+    	Content content = null;
     	try {
             Document doc = Jsoup.connect(normalizeUrl(url)).get();
-            article = extractContent(url, doc);
+            content = extractContent(url, doc);
 
-            if (article == null) {
+            if (content == null) {
                 System.out.println("[" + getSourceName() + "] Playwright fallback: " + url);
                 Playwright pw = Playwright.create();
                 Browser browser = pw.chromium().launch(
@@ -77,7 +121,7 @@ public class Investor extends BaseScraper implements NewsSource {
                 page.waitForTimeout(2000);
 
                 doc = Jsoup.parse(page.content());
-                article = extractContent(url, doc);
+                content = extractContent(url, doc);
                 page.close();
                 browser.close();
             }
@@ -86,7 +130,7 @@ public class Investor extends BaseScraper implements NewsSource {
     		e.printStackTrace();
 		}
 
-        return article;
+        return content;
     }
 
     private Content extractContent(String url, Document doc) {
@@ -110,10 +154,9 @@ public class Investor extends BaseScraper implements NewsSource {
             }
 
         	String title = cleanText(doc.selectFirst("h1").text());
-        	System.out.println("title : " + title);
             LocalDateTime ldt = extractPublishDate(doc);
 
-            StringBuilder content = new StringBuilder();
+            StringBuilder sb = new StringBuilder();
             //<div class="col fsbody2 body-content">
             Element div = doc.selectFirst("div.body-content");
             for (Element p : div.select("p")) {
@@ -124,12 +167,12 @@ public class Investor extends BaseScraper implements NewsSource {
                     	!clean.contains("Follow Channel") &&  
                     	!clean.contains("Baca Juga:") &&  
                 		!clean.contains("Editor:")) {
-                        content.append(clean);
-                        if (!clean.isBlank()) content.append("\n");
+                        sb.append(clean);
+                        if (!clean.isBlank()) sb.append("\n");
                 }
             }
 
-            articleContent = new Content(title, ldt, removePrefixSuffix(content.toString().trim()), url, getSourceName());
+            articleContent = new Content(title, ldt, removePrefixSuffix(sb.toString().trim()), url, getSourceName());
         } catch (Exception e) {
         	e.printStackTrace();
         }

@@ -13,6 +13,9 @@ import com.microsoft.playwright.*;
 
 public class KabarBursa extends BaseScraper implements NewsSource {
 	private final String BASE_URL = "https://www.kabarbursa.com/market-hari-ini/";
+	private final String[] sitemap = {
+			"https://www.kabarbursa.com/sitemap-news.xml"
+	};
 
     @Override
     public String getSourceName() {
@@ -20,7 +23,46 @@ public class KabarBursa extends BaseScraper implements NewsSource {
     }
 
     @Override
-    public List<Content> getArticleList(int scrapLimit) throws Exception {
+    public List<Content> getNewsList(int scrapLimit, boolean fromSiteMap) throws Exception {
+    	List<Content> list = new ArrayList<>();
+
+    	if (fromSiteMap) {
+    		list = getNewsListFromSiteMap(scrapLimit);
+    	} else {
+    		list = getNewsListFromWebsite(scrapLimit);
+    	}
+
+    	return list;
+    }
+
+    //in the sitemap, all url in <loc> is categorized, so checking will be done here
+    private List<Content> getNewsListFromSiteMap(int scrapLimit) throws Exception {
+    	List<Content> list = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
+
+    	for (String site : sitemap) {    		
+            Document doc = Jsoup.connect(site).get();
+
+            for (Element loc : doc.select("loc")) {
+                String href = loc.text().trim();
+            	if (href.contains("market-hari-ini")) {
+    	        	if (!seen.contains(href)) {
+    	        		seen.add(href);
+
+    	        		if (scrapLimit > 0 && list.size() >= scrapLimit) {
+    	        			break;
+    	        		} else {
+    	        			list.add(new Content(href, getSourceName()));	        			
+    	        		}
+    	        	}
+            	}
+            }
+    	}
+
+        return list;
+    }
+
+    private List<Content> getNewsListFromWebsite(int scrapLimit) throws Exception {
         Document doc = Jsoup.connect(BASE_URL).get();
 
         List<Content> list = new ArrayList<>();
@@ -30,8 +72,8 @@ public class KabarBursa extends BaseScraper implements NewsSource {
         Element div = doc.selectFirst("div.space-y-6");
         for (Element el : div.select("a")) {
             String href = el.attr("href");
-            String title = cleanText(el.text());
 
+            //<a href="https://www.kabarbursa.com/market-hari-ini/ritel-teratas-apa-saja-yang-diborong-sepekan"
         	if (href.startsWith(BASE_URL)) {
             	if (!seen.contains(href)) {
             		seen.add(href);
@@ -39,7 +81,7 @@ public class KabarBursa extends BaseScraper implements NewsSource {
 	        		if (scrapLimit > 0 && list.size() >= scrapLimit) {
 	        			break;
 	        		} else {
-	        			list.add(new Content(title, href, getSourceName()));	        			
+	        			list.add(new Content(href, getSourceName()));	        			
 	        		}
             	}
             }
@@ -49,37 +91,45 @@ public class KabarBursa extends BaseScraper implements NewsSource {
     }
 
     @Override
-    public Content getContent(String url) {
-    	Content article = null;
+    public Content getNewsDetail(String url) throws Exception {
+    	Content content = null;
     	try {
             Document doc = Jsoup.connect(normalizeUrl(url)).get();
-            article = extractContent(url, doc);
 
-            if (article == null) {
-                System.out.println("[" + getSourceName() + "] Playwright fallback: " + url);
-                Playwright pw = Playwright.create();
-                Browser browser = pw.chromium().launch(
-                		new BrowserType.LaunchOptions().setHeadless(true)
-                );
+            //<h1 style="font-size: 72px; font-weight: 700;">404</h1>
+            Element four0four = doc.selectFirst("h1");
+            if (four0four != null && four0four.text().equals("404")) {
+            	System.out.println("404404404404404404404404404404");
+            } else {
+                content = extractContent(url, doc);
 
-                Page page = browser.newPage();
-                page.navigate(normalizeUrl(url));
-                page.waitForTimeout(2000);
+//              if (content == null) {
+//                  System.out.println("[" + getSourceName() + "] Playwright fallback: " + url);
+//                  Playwright pw = Playwright.create();
+//                  Browser browser = pw.chromium().launch(
+//                  		new BrowserType.LaunchOptions().setHeadless(true)
+//                  );
 
-                doc = Jsoup.parse(page.content());
-                article = extractContent(url, doc);
-                page.close();
-                browser.close();
+//                  Page page = browser.newPage();
+//                  page.navigate(normalizeUrl(url));
+//                  page.waitForTimeout(2000);
+
+//                  doc = Jsoup.parse(page.content());
+//                  content = extractContent(url, doc);
+//                  page.close();
+//                  browser.close();
+//              }
             }
     	} catch (Exception e) {
 			// TODO: handle exception
-    		e.printStackTrace();
+//    		e.printStackTrace();
+    		throw e;
 		}
 
-        return article;
+        return content;
     }
 
-    private Content extractContent(String url, Document doc) {
+    private Content extractContent(String url, Document doc) throws Exception {
     	Content articleContent = null;
         try {
         	//no need to remove noise because extraction only on specific part (selectFirst)
@@ -90,21 +140,22 @@ public class KabarBursa extends BaseScraper implements NewsSource {
         	String title = cleanText(doc.selectFirst("meta[property=og:title]").attr("content"));
             LocalDateTime ldt = extractPublishDate(doc);
 
-            StringBuilder content = new StringBuilder();
+            StringBuilder sb = new StringBuilder();
             //<div id="articleContent" class="prose max-w-none text-gray-800 mt-6">
             Element div = doc.selectFirst("div#articleContent");
             for (Element p : div.select("p")) {
             	String clean = cleanText(p.text());
                 if (clean != null &&
                     !clean.contains("Dapatkan pengalaman membaca")) {
-                	content.append(clean);
-                    if (!clean.isBlank()) content.append("\n");
+                	sb.append(clean);
+                    if (!clean.isBlank()) sb.append("\n");
                 }
             }
 
-            articleContent = new Content(title, ldt, removePrefixSuffix(content.toString().trim()), url, getSourceName());
+            articleContent = new Content(title, ldt, removePrefixSuffix(sb.toString().trim()), url, getSourceName());
         } catch (Exception e) {
-        	e.printStackTrace();
+//        	e.printStackTrace();
+        	throw e; 
         }
 
         return articleContent;
@@ -141,7 +192,8 @@ public class KabarBursa extends BaseScraper implements NewsSource {
 //    	String[] PREFIX = {"KABARBURSA.COM - ", "KABARBURSA.COM -", "KABARBURSA.COM- ", "KABARBURSA.COM-", 
 //    						"KABARBURSA.COM – ", "KABARBURSA.COM –", "KABARBURSA.COM– ", "KABARBURSA.COM–"};	//must in order
     	String[] PREFIX = {"(?i)^KABARBURSA\\.C[O0]M\\s*\\p{Pd}\\s*"};
-    	String[] SUFFIX = {"(*)"};
+//    	String[] SUFFIX = {"(*)"};
+    	String[] SUFFIX = {"(?i)\\(\\s*[^)]*\\s*\\)\\s*$"};
     	str.trim();
 
     	if (str != null && str.length() > 0) {
@@ -154,10 +206,11 @@ public class KabarBursa extends BaseScraper implements NewsSource {
         	}
 
         	for (String s : SUFFIX) {
-    	    	if (str.endsWith(s)) {
-	    			str = str.substring(0, str.length() - s.length()).trim();
-    	    		break;	//break because maybe have only 1 suffix
-    	    	}
+        		str = str.replaceFirst(s, "").trim();
+//    	    	if (str.endsWith(s)) {
+//	    			str = str.substring(0, str.length() - s.length()).trim();
+//    	    		break;	//break because maybe have only 1 suffix
+//    	    	}
         	}
     	}
 

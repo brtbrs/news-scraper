@@ -20,7 +20,27 @@ public class IPOTNews extends BaseScraper implements NewsSource {
     }
 
     @Override
-    public List<Content> getArticleList(int scrapLimit) throws Exception {
+    public List<Content> getNewsList(int scrapLimit, boolean fromSiteMap) throws Exception {
+    	List<Content> list = new ArrayList<>();
+
+    	if (fromSiteMap) {
+    		list = getNewsListFromSiteMap(scrapLimit);
+    	} else {
+    		list = getNewsListFromWebsite(scrapLimit);
+    	}
+
+    	return list;
+    }
+
+    private List<Content> getNewsListFromSiteMap(int scrapLimit) throws Exception {
+    	List<Content> list = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
+
+
+        return list;
+    }
+
+    private List<Content> getNewsListFromWebsite(int scrapLimit) throws Exception {
         Document doc = Jsoup.connect(BASE_URL).get();
 
         List<Content> list = new ArrayList<>();
@@ -32,7 +52,7 @@ public class IPOTNews extends BaseScraper implements NewsSource {
             // ✅ MULTIPLE links inside each container
             for (Element el : div.select("a[href]")) {
             	String href = el.attr("href");
-                String title = cleanText(el.text());
+//                String title = cleanText(el.text());
 
             	//<a href="newsDetail.php?jdl=Laba_Bersih_SGRO_di_2025_Turun_51_9___Tapi_Kas_Meroket_245_5_&news_id=215777&group_news=IPOTNEWS&taging_subtype=SGRO&name=&search=y_general&q=Prime Agri Resources&halaman=1">
                 if (href.contains("newsDetail.php")) {
@@ -48,7 +68,7 @@ public class IPOTNews extends BaseScraper implements NewsSource {
         	        		if (scrapLimit > 0 && list.size() >= scrapLimit) {
         	        			break;
         	        		} else {
-        	        			list.add(new Content(title, href, getSourceName()));	        			
+        	        			list.add(new Content(href, getSourceName()));	        			
         	        		}
                     	}
                 	}
@@ -62,13 +82,13 @@ public class IPOTNews extends BaseScraper implements NewsSource {
     }
 
     @Override
-    public Content getContent(String url) {
-    	Content article = null;
+    public Content getNewsDetail(String url) {
+    	Content content = null;
     	try {
             Document doc = Jsoup.connect(normalizeUrl(url)).get();
-            article = extractContent(url, doc);
+            content = extractContent(url, doc);
 
-            if (article == null) {
+            if (content == null) {
                 System.out.println("[" + getSourceName() + "] Playwright fallback: " + url);
                 Playwright pw = Playwright.create();
                 Browser browser = pw.chromium().launch(
@@ -80,7 +100,7 @@ public class IPOTNews extends BaseScraper implements NewsSource {
                 page.waitForTimeout(2000);
 
                 doc = Jsoup.parse(page.content());
-                article = extractContent(url, doc);
+                content = extractContent(url, doc);
                 page.close();
                 browser.close();
             }
@@ -89,7 +109,7 @@ public class IPOTNews extends BaseScraper implements NewsSource {
     		e.printStackTrace();
 		}
 
-        return article;
+        return content;
     }
 
     private Content extractContent(String url, Document doc) {
@@ -102,19 +122,17 @@ public class IPOTNews extends BaseScraper implements NewsSource {
             //<article>
             Element article = doc.selectFirst("article");
             String[] brs = article.html().split("<br>");
-            StringBuilder content = new StringBuilder();
+            StringBuilder sb = new StringBuilder();
 
             for (int i=0; i<brs.length; i++) {
                 if (!brs[i].contains("Sumber :")) {
                 	String clean = cleanText(brs[i]);
-                    if (!clean.isBlank()) {
-                    	content.append(clean);
-                    	content.append("\n");
-                    }
+                    sb.append(clean);
+                    if (!clean.isBlank()) sb.append("\n");
                 }
             }
 
-            articleContent = new Content(title, ldt, removePrefixSuffix(content.toString().trim()), url, getSourceName());
+            articleContent = new Content(title, ldt, removePrefixSuffix(sb.toString().trim()), url, getSourceName());
         } catch (Exception e) {
         	e.printStackTrace();
         }
@@ -157,7 +175,7 @@ public class IPOTNews extends BaseScraper implements NewsSource {
     	//be careful: \n at the end, dont forget to trim()
     	String[] PREFIX = {"(?i)^JAKARTA\\s*,\\s*investor.id\\s*\\p{Pd}\\s*"};;	//yes, ipot also source its news from other channels
 //    	String[] SUFFIX = {"(Budi/AI)", "(Dow Jones Newswires)", "(Bloomberg/AI)", "(reuters)"};
-    	String[] SUFFIX = {"(?i)\\s*\\(\\s*[^)]*\\s*\\)\\s*$"};
+    	String[] SUFFIX = {"(?i)\\(\\s*[^)]*\\s*\\)\\s*$"};
     	str.trim();
 
     	if (str != null && str.length() > 0) {

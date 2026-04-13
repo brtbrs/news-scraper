@@ -23,14 +23,14 @@ public class ApiContentClient {
                 : apiBaseUrl + "/contents";
     }
 
-    public void sendContent(Content article) {
+    public void sendContent(Content content) {
         ApiContentRequest requestBody = new ApiContentRequest(
-                article.source == null ? null : article.source.trim(),
-                article.title,
-                article.content,
-                article.url,
-                "id",
-                article.originalPublishDate == null ? null : article.originalPublishDate.atOffset(ZoneOffset.UTC).toInstant().toString()
+        		content.getSource() == null ? null : content.getSource().trim(),
+        				content.getOriginalTitle(),
+        				content.getOriginalContent(),
+        				content.getUrl(),
+        				"id",
+        				content.getOriginalPublishDate() == null ? null : content.getOriginalPublishDate().atOffset(ZoneOffset.UTC).toInstant().toString()
         );
 
         try {
@@ -44,14 +44,14 @@ public class ApiContentClient {
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
             int statusCode = response.statusCode();
             if (statusCode < 200 || statusCode >= 300) {
-                System.out.println("Failed to send content to API. status=" + statusCode + ", url=" + article.url + ", response=" + response.body());
+                System.out.println("Failed to send content to API. status=" + statusCode + ", url=" + content.getUrl() + ", response=" + response.body());
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            System.out.println("Interrupted while sending content to API for url=" + article.url + ": " + e.getMessage());
+            System.out.println("Interrupted while sending content to API for url=" + content.getUrl() + ": " + e.getMessage());
             e.printStackTrace();
         } catch (IOException e) {
-            System.out.println("Error sending content to API for url=" + article.url + ": " + e.getMessage());
+            System.out.println("Error sending content to API for url=" + content.getUrl() + ": " + e.getMessage());
             e.printStackTrace();
         }
     }

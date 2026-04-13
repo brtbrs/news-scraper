@@ -2,21 +2,23 @@ package id.ihaesge.scraper.sources;
 
 import id.ihaesge.scraper.core.*;
 
-import org.jsoup.*;
-import org.jsoup.nodes.*;
-
 import java.time.*;
 import java.time.format.*;
 import java.util.*;
 
+import org.jsoup.*;
+import org.jsoup.nodes.*;
+
 import com.microsoft.playwright.*;
 
-public class CNBC extends BaseScraper implements NewsSource {
-	private final String BASE_URL = "https://www.cnbcindonesia.com/market/";
+
+public class Ajaib extends BaseScraper implements NewsSource {
+	private final String BASE_URL = "https://ajaib.co.id";
+	private final String BERITA_URL = BASE_URL + "/belajar/berita";
 
     @Override
     public String getSourceName() {
-        return "CNBCINDONESIA";
+        return "AJAIB";
     }
 
     @Override
@@ -41,42 +43,31 @@ public class CNBC extends BaseScraper implements NewsSource {
     }
 
     private List<Content> getNewsListFromWebsite(int scrapLimit) throws Exception {
-        Document doc = Jsoup.connect(BASE_URL).get();
+        Document doc = Jsoup.connect(BERITA_URL).get();
 
         List<Content> list = new ArrayList<>();
         Set<String> seen = new HashSet<>();
 
-        // ✅ MULTIPLE containers
-        //<article>
-        for (Element div : doc.select("article")) {
+        //<div class="flex flex-col gap-2">
+        for (Element div : doc.select("div.flex.flex-col.gap-2")) {
+        	Element a = div.selectFirst("a[href]");
+            String href = a.attr("href");
 
-            // ✅ MULTIPLE links inside each container
-            for (Element el : div.select("a[href]")) {
-            	String href = el.attr("href");
-            	if (!href.contains("video-")) {		//do not scrape if it is video news
-//                    String title = cleanText(el.text());
+            //<a href="/belajar/berita/saham-wbsa-oversubscribe-lampaui-rekor-ipo-supa">
+            //https://ajaib.co.id/belajar/berita/saham-wbsa-oversubscribe-lampaui-rekor-ipo-supa
+            if (href.startsWith("/belajar/berita/")) {
+        		href = BASE_URL + href;
 
-            		//only get the "market" category
-                	//<a class="group flex gap-4 items-center" href="https://www.cnbcindonesia.com/market/20260406102727-17-724106/ojk-ungkap-makna-saham-hsc-bukan-pelanggaran-tapi" dtr-evt="nhl" 
-            		if (href.startsWith(BASE_URL)) {
-//                    	if (!href.startsWith("http")) {
-//                    		href = BASE_URL + href;
-//                    	}
+            	if (!seen.contains(href)) {
+            		seen.add(href);
 
-                    	if (!seen.contains(href)) {
-                    		seen.add(href);
-
-                    		if (scrapLimit > 0 && list.size() >= scrapLimit) {
-        	        			break;
-        	        		} else {
-        	        			list.add(new Content(href, getSourceName()));	        			
-        	        		}
-                    	}
-                    }
+	        		if (scrapLimit > 0 && list.size() >= scrapLimit) {
+	        			break;
+	        		} else {
+	        			list.add(new Content(href, getSourceName()));	        			
+	        		}
             	}
             }
-
-            if (scrapLimit > 0 && list.size() >= scrapLimit) break;
         }
 
         return list;
@@ -116,21 +107,25 @@ public class CNBC extends BaseScraper implements NewsSource {
     private Content extractContent(String url, Document doc) {
     	Content articleContent = null;
         try {
-        	//no need to remove noise because extraction only on specific part (selectFirst)
-//        	removeNoise(doc);
-//        	removeNoiseCNBC(doc);
+        	//need to remove noise because there are other parts that use <p> that are not relevant
+        	removeNoise(doc);
+        	removeNoiseNeraca(doc);
 
-        	String title = cleanText(doc.selectFirst("title").text());
+            Element h1 = doc.selectFirst("h1");
+            if (h1 == null) return null;
+
+            String title = cleanText(doc.selectFirst("title").text());
+            title = removePrefixSuffix(title);
+
             LocalDateTime ldt = extractPublishDate(doc);
 
             StringBuilder sb = new StringBuilder();
-            //<div class="detail-text">
-            Element div = doc.selectFirst("div.detail-text");
-            for (Element p : div.select("p")) {
+            for (Element p : doc.select("p")) {
             	String clean = cleanText(p.text());
-                if (clean != null) {
-//                    !clean.contains("Jakarta, CNBC Indonesia ")) {
-                	sb.append(clean);
+                if (clean != null &&
+                        !clean.contains("Sumber: ") && 
+                        !clean.contains("Disclaimer: ")) {
+                    sb.append(clean);
                     if (!clean.isBlank()) sb.append("\n");
                 }
             }
@@ -143,13 +138,14 @@ public class CNBC extends BaseScraper implements NewsSource {
         return articleContent;
     }
 
-    //<meta name="publishdate" content="2026/03/26 14:05:21" />
+    //<span>Kamis, 26/03/2026</span>
+    //<span>April 10, 2026</span>
     private LocalDateTime extractPublishDate(Document doc) {
-        Element meta = doc.selectFirst("meta[name=publishdate]");
-        if (meta != null) {
-            String publishDate = cleanText(meta.attr("content"));
+        Element el = doc.selectFirst("span:matches(^[A-Za-z]+\\s+\\d{1,2},\\s+\\d{4}$)");
+        if (el != null) {
+            String publishDate = cleanText(el.text() + " 00:00:01");
 
-        	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss", new Locale("id", "ID"));
+        	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMMM dd, yyyy HH:mm:ss", new Locale("id", "ID"));
         	LocalDateTime ldt = LocalDateTime.parse(publishDate, formatter);
 
         	return ldt;
@@ -158,22 +154,26 @@ public class CNBC extends BaseScraper implements NewsSource {
         return null;
     }
 
-//    private void removeNoiseCNBC(Document doc) {
-//        String[] selectors = {
-//                "figcaption", ".topik2"
-//        };
-//
-//        for (String sel : selectors) {
-//            doc.select(sel).remove();
-//        }
-//    }
+    private void removeNoiseNeraca(Document doc) {
+        String[] selectors = {
+        		//article list
+        		//article detail
+                ".berita-terkait", ".terpopuler1"
+                //common
+        };
+
+        for (String sel : selectors) {
+            doc.select(sel).remove();
+        }
+    }
 
     private String removePrefixSuffix(String str) {
     	//be careful: – is different -
     	//be careful: \n at the end, dont forget to trim()
-//    	String[] PREFIX = {"Jakarta, CNBC Indonesia —", "Jakarta, CNBC Indonesia — ", "Jakarta, CNBC Indonesia— ", "Jakarta, CNBC Indonesia—"};	//must in order
-    	String[] PREFIX = {"(?i)^Jakarta\\s*,\\s*CNBC Indonesia\\s*\\p{Pd}\\s*"};
-    	String[] SUFFIX = {};
+//    	String[] PREFIX = {"NERACA", "Jakarta - ", "Jakarta- ", "Jakarta -", "Jakarta-"};	//must in order
+    	String[] PREFIX = {""};
+    	//" - Ajaib"
+    	String[] SUFFIX = {"(?i)\\s*\\p{Pd}\\s*Ajaib", "(?i)\\(\\s*[^)]*\\s*\\)\\s*$"};
     	str.trim();
 
     	if (str != null && str.length() > 0) {
