@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/contents")
+@RequestMapping("/api/ingest/contents")
 public class ContentController {
     private final ContentService contentService;
 

@@ -104,25 +104,17 @@ CREATE TABLE content (
     CONSTRAINT ck_content_original_title_not_blank CHECK (length(trim(original_title)) > 0),
     CONSTRAINT ck_content_original_content_not_blank CHECK (length(trim(original_content)) > 0),
     CONSTRAINT ck_content_original_language_not_blank CHECK (length(trim(original_language)) > 0),
-    title_id TEXT,		--drop
-    title_en TEXT,		--drop
-    content_id TEXT,	--drop
-    content_en TEXT,	--drop
-    sentiment UUID,		--drop
-    duplicate UUID,		--drop
-    publish_date TIMESTAMPTZ,	--drop
+    original_publish_date TIMESTAMPTZ NOT NULL,
     status UUID NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT fk_content_type FOREIGN KEY (type) REFERENCES attribute (id) ON DELETE RESTRICT,
     CONSTRAINT fk_content_source FOREIGN KEY (source) REFERENCES source (id) ON DELETE CASCADE,
-    CONSTRAINT fk_content_sentiment FOREIGN KEY (sentiment) REFERENCES attribute (id) ON DELETE RESTRICT,
-    CONSTRAINT fk_content_duplicate FOREIGN KEY (duplicate) REFERENCES content (id) ON DELETE SET NULL,
     CONSTRAINT fk_content_status FOREIGN KEY (status) REFERENCES attribute (id) ON DELETE RESTRICT
 );
 
 CREATE TABLE content_ai (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    content UUID NOT NULL,
+    content UUID NOT NULL UNIQUE,
     title_id TEXT,
     title_en TEXT,
     content_id TEXT,
@@ -130,11 +122,10 @@ CREATE TABLE content_ai (
     sentiment UUID,
     duplicate UUID,
     publish_date TIMESTAMPTZ,
-    status UUID NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT fk_content_sentiment FOREIGN KEY (sentiment) REFERENCES attribute (id) ON DELETE RESTRICT,
-    CONSTRAINT fk_content_duplicate FOREIGN KEY (duplicate) REFERENCES content (id) ON DELETE SET NULL,
-    CONSTRAINT fk_content_status FOREIGN KEY (status) REFERENCES attribute (id) ON DELETE RESTRICT
+    CONSTRAINT fk_content_ai_content FOREIGN KEY (content) REFERENCES content (id) ON DELETE CASCADE,
+    CONSTRAINT fk_content_ai_sentiment FOREIGN KEY (sentiment) REFERENCES attribute (id) ON DELETE RESTRICT,
+    CONSTRAINT fk_content_ai_duplicate FOREIGN KEY (duplicate) REFERENCES content (id) ON DELETE SET NULL
 );
 
 CREATE TABLE content_stock (
@@ -217,10 +208,9 @@ CREATE INDEX idx_stock_status ON stock (status);
 CREATE INDEX idx_content_type ON content (type);
 CREATE INDEX idx_content_source ON content (source);
 CREATE INDEX idx_content_status ON content (status);
-CREATE INDEX idx_content_url ON content (url);
-CREATE INDEX idx_content_sentiment ON content (sentiment);
-CREATE INDEX idx_content_publish_date ON content (publish_date);
 CREATE INDEX idx_content_original_publish_date ON content (original_publish_date);
+CREATE INDEX idx_content_ai_sentiment ON content_ai (sentiment);
+CREATE INDEX idx_content_ai_publish_date ON content_ai (publish_date);
 CREATE INDEX idx_corporate_event_stock ON corporate_event (stock);
 CREATE INDEX idx_content_stock_content ON content_stock (content);
 CREATE INDEX idx_content_stock_stock ON content_stock (stock);
