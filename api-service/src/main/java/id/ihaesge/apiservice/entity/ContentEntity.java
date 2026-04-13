@@ -7,6 +7,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import org.hibernate.annotations.UuidGenerator;
 
@@ -44,12 +45,12 @@ public class ContentEntity {
     @Column(name = "original_publish_date", nullable = false)
     private Instant originalPublishDate;
 
-    @Column(name = "publish_date")
-    private Instant publishDate;
-
     @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "status", nullable = false)
     private AttributeEntity status;
+
+    @OneToOne(mappedBy = "content", fetch = FetchType.LAZY)
+    private ContentAiEntity contentAi;
 
     @Column(name = "created_at", nullable = false, updatable = false, insertable = false)
     private Instant createdAt;
@@ -78,11 +79,11 @@ public class ContentEntity {
     public Instant getOriginalPublishDate() { return originalPublishDate; }
     public void setOriginalPublishDate(Instant originalPublishDate) { this.originalPublishDate = originalPublishDate; }
 
-    public Instant getPublishDate() { return publishDate; }
-    public void setPublishDate(Instant publishDate) { this.publishDate = publishDate; }
-
     public AttributeEntity getStatus() { return status; }
     public void setStatus(AttributeEntity status) { this.status = status; }
+
+    public ContentAiEntity getContentAi() { return contentAi; }
+    public void setContentAi(ContentAiEntity contentAi) { this.contentAi = contentAi; }
 
     public Instant getCreatedAt() { return createdAt; }
 }
