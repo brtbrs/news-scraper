@@ -3,9 +3,11 @@ package id.ihaesge.apiservice.service;
 import id.ihaesge.apiservice.dto.ContentResponse;
 import id.ihaesge.apiservice.dto.CreateContentRequest;
 import id.ihaesge.apiservice.entity.AttributeEntity;
+import id.ihaesge.apiservice.entity.ContentAiEntity;
 import id.ihaesge.apiservice.entity.ContentEntity;
 import id.ihaesge.apiservice.entity.SourceEntity;
 import id.ihaesge.apiservice.repository.AttributeRepository;
+import id.ihaesge.apiservice.repository.ContentAiRepository;
 import id.ihaesge.apiservice.repository.ContentRepository;
 import id.ihaesge.apiservice.repository.SourceRepository;
 import org.springframework.stereotype.Service;
@@ -24,15 +26,18 @@ public class ContentService {
     private static final String CONTENT_STATUS_PENDING = "PENDING";
 
     private final ContentRepository contentRepository;
+    private final ContentAiRepository contentAiRepository;
     private final SourceRepository sourceRepository;
     private final AttributeRepository attributeRepository;
 
     public ContentService(
             ContentRepository contentRepository,
+            ContentAiRepository contentAiRepository,
             SourceRepository sourceRepository,
             AttributeRepository attributeRepository
     ) {
         this.contentRepository = contentRepository;
+        this.contentAiRepository = contentAiRepository;
         this.sourceRepository = sourceRepository;
         this.attributeRepository = attributeRepository;
     }
@@ -53,10 +58,15 @@ public class ContentService {
         entity.setUrl(request.url());
         entity.setOriginalLanguage(request.originalLanguage() != null ? request.originalLanguage() : "id");
         entity.setOriginalPublishDate(request.originalPublishDate() != null ? request.originalPublishDate() : Instant.now());
-        entity.setPublishDate(request.publishDate());
         entity.setStatus(status);
 
         ContentEntity saved = contentRepository.save(entity);
+
+        ContentAiEntity contentAi = contentAiRepository.findByContent(saved).orElseGet(ContentAiEntity::new);
+        contentAi.setContent(saved);
+        contentAi.setPublishDate(request.publishDate());
+        contentAiRepository.save(contentAi);
+
         return toResponse(saved);
     }
 
@@ -100,6 +110,7 @@ public class ContentService {
     }
 
     private ContentResponse toResponse(ContentEntity entity) {
+        Instant publishDate = entity.getContentAi() != null ? entity.getContentAi().getPublishDate() : null;
         return new ContentResponse(
                 entity.getId(),
                 entity.getSource().getName(),
@@ -108,7 +119,7 @@ public class ContentService {
                 entity.getUrl(),
                 entity.getOriginalLanguage(),
                 entity.getOriginalPublishDate(),
-                entity.getPublishDate(),
+                publishDate,
                 entity.getCreatedAt()
         );
     }
