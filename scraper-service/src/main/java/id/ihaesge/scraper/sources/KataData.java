@@ -129,30 +129,49 @@ public class KataData extends BaseScraper implements NewsSource {
     }
 
     private List<String> getNewsListFromWebsite(int scrapLimit) throws Exception {
-        Document doc = Jsoup.connect(BASE_URL).get();
+        Document docFinansial = Jsoup.connect(FINANSIAL_URL).get();
 
         List<String> urls = new ArrayList<>();
         Set<String> seen = new HashSet<>();
 
-        //<div class="latest-news">
-        Element div = doc.selectFirst("div.latest-news");
-        for (Element el : div.select("a")) {
-            String href = el.attr("href");
-//            String title = cleanText(el.text());
+        //<div class="latest-news result">
+        //<article class="article article--berita d-flex ">
+        for (Element el : docFinansial.select("article.article.article--berita.d-flex")) {
+            Element a = el.selectFirst("a[href]");
+            String href = a.attr("href");
 
-            //<a href="https://katadata.co.id/finansial/bursa/69cf770c1292f/bumn-karya-kian-mengkhawatirkan-rugi-ptpp-dan-wika-bengkak-berkali-kali-lipat">
-            //https://katadata.co.id/finansial/korporasi/69d7aff228991/bank-ocbc-nisp-respons-dorongan-ojk-akui-tak-mudah-naik-kelas-ke-kbmi-4
-            if (href.startsWith(FINANSIAL_URL) || href.startsWith(KORPORASI_URL)) {
-            	if (href.length() > FINANSIAL_URL.length() || href.length() > KORPORASI_URL.length()) {
-                	if (!seen.contains(href)) {
-                		seen.add(href);
+            //<a href="https://katadata.co.id/finansial/bursa/69dce5976e3b2/jelang-right-issue-entitas-happy-hapsoro-hilang-dari-daftar-pemilik-saham-padi">
+            if (href.startsWith(FINANSIAL_URL) && (href.length() > FINANSIAL_URL.length())) {
+            	if (!seen.contains(href)) {
+            		seen.add(href);
 
-    	        		if (scrapLimit > 0 && urls.size() >= scrapLimit) {
-    	        			break;
-    	        		} else {
-    	        			urls.add(href);	        			
-    	        		}
-                	}
+	        		if (scrapLimit > 0 && urls.size() >= scrapLimit) {
+	        			break;
+	        		} else {
+	        			urls.add(href);	        			
+	        		}
+            	}
+            }
+        }
+
+        Document docKorporasi = Jsoup.connect(KORPORASI_URL).get();
+
+        //<div class="latest-news result">
+        //<article class="article article--berita d-flex ">
+        for (Element el : docKorporasi.select("article.article.article--berita.d-flex")) {
+            Element a = el.selectFirst("a[href]");
+            String href = a.attr("href");
+
+            //https://katadata.co.id/finansial/korporasi/69dc424e3faa5/manajemen-dewa-bicara-peluang-bagikan-dividen-usai-laba-melonjak">
+            if (href.startsWith(KORPORASI_URL) && (href.length() > KORPORASI_URL.length())) {
+            	if (!seen.contains(href)) {
+            		seen.add(href);
+
+	        		if (scrapLimit > 0 && urls.size() >= scrapLimit) {
+	        			break;
+	        		} else {
+	        			urls.add(href);	        			
+	        		}
             	}
             }
         }
