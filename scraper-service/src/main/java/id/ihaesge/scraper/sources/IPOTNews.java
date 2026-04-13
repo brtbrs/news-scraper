@@ -20,30 +20,30 @@ public class IPOTNews extends BaseScraper implements NewsSource {
     }
 
     @Override
-    public List<Content> getNewsList(int scrapLimit, boolean fromSiteMap) throws Exception {
-    	List<Content> list = new ArrayList<>();
+    public List<String> getNewsList(int scrapLimit, boolean fromSiteMap) throws Exception {
+    	List<String> urls = new ArrayList<>();
 
     	if (fromSiteMap) {
-    		list = getNewsListFromSiteMap(scrapLimit);
+    		urls = getNewsListFromSiteMap(scrapLimit);
     	} else {
-    		list = getNewsListFromWebsite(scrapLimit);
+    		urls = getNewsListFromWebsite(scrapLimit);
     	}
 
-    	return list;
+    	return urls;
     }
 
-    private List<Content> getNewsListFromSiteMap(int scrapLimit) throws Exception {
-    	List<Content> list = new ArrayList<>();
+    private List<String> getNewsListFromSiteMap(int scrapLimit) throws Exception {
+    	List<String> urls = new ArrayList<>();
         Set<String> seen = new HashSet<>();
 
 
-        return list;
+        return urls;
     }
 
-    private List<Content> getNewsListFromWebsite(int scrapLimit) throws Exception {
+    private List<String> getNewsListFromWebsite(int scrapLimit) throws Exception {
         Document doc = Jsoup.connect(BASE_URL).get();
 
-        List<Content> list = new ArrayList<>();
+        List<String> urls = new ArrayList<>();
         Set<String> seen = new HashSet<>();
 
         // ✅ MULTIPLE containers
@@ -65,24 +65,24 @@ public class IPOTNews extends BaseScraper implements NewsSource {
                     	if (!seen.contains(href)) {
                     		seen.add(href);
 
-        	        		if (scrapLimit > 0 && list.size() >= scrapLimit) {
+        	        		if (scrapLimit > 0 && urls.size() >= scrapLimit) {
         	        			break;
         	        		} else {
-        	        			list.add(new Content(href, getSourceName()));	        			
+        	        			urls.add(href);	        			
         	        		}
                     	}
                 	}
                 }
             }
 
-            if (scrapLimit > 0 && list.size() >= scrapLimit) break;
+            if (scrapLimit > 0 && urls.size() >= scrapLimit) break;
         }
 
-        return list;
+        return urls;
     }
 
     @Override
-    public Content getNewsDetail(String url) {
+    public Content getNewsDetail(String url) throws Exception {
     	Content content = null;
     	try {
             Document doc = Jsoup.connect(normalizeUrl(url)).get();
@@ -105,7 +105,6 @@ public class IPOTNews extends BaseScraper implements NewsSource {
                 browser.close();
             }
     	} catch (Exception e) {
-			// TODO: handle exception
     		e.printStackTrace();
 		}
 
@@ -140,8 +139,8 @@ public class IPOTNews extends BaseScraper implements NewsSource {
         return articleContent;
     }
 
-    //<meta property="article:published_time" content="2026-03-27 14:52:59">
     private LocalDateTime extractPublishDate(Document doc) {
+        //<meta property="article:published_time" content="2026-03-27 14:52:59">
         Element meta = doc.selectFirst("meta[property=article:published_time]");
         if (meta != null) {
             String publishDate = cleanText(meta.attr("content"));
@@ -155,28 +154,30 @@ public class IPOTNews extends BaseScraper implements NewsSource {
         return null;
     }
 
-//    private void removeNoiseIPOTNews(Document doc) {
-//        String[] selectors = {
-//        		//article list
-//        		//article detail
-//                "#stockInfoContainer", "#popInfoModal", "#OneClickContainer", "#lmDanaTersediaFund", "#lmDanaTersediaStock", "#lmDanaTersediaTalangan", "#lmDanaTersediaTalanganRDPU", "#lmLimitFasilitasMin", "#lmLimitFasilitasMax", "#lmDanaTersediaTalanganFasilitasFund", "lmDanaTersediaTalanganFasilitasStockMin", "#lmDanaTersediaTalanganFasilitasStockMax", "#lmDanaTersediaTalanganFasilitasStockMax",
-//                //common
-//                "#login_modal", "#showhidebasket", "#navnews", "#navbarIpotnews", ".sidebar.sidebar-right", 
-//                "#infoLimit", "#infoOdt", "#infoMargin", "#upgradeFasilitas", "#confirmFasilitas", "#searchBarContainer"
-//        };
-//
-//        for (String sel : selectors) {
-//            doc.select(sel).remove();
-//        }
-//    }
+    private void removeNoiseIPOTNews(Document doc) {
+        String[] selectors = {
+        		//article list
+        		//article detail
+                "#stockInfoContainer", "#popInfoModal", "#OneClickContainer", "#lmDanaTersediaFund", "#lmDanaTersediaStock", "#lmDanaTersediaTalangan", "#lmDanaTersediaTalanganRDPU", "#lmLimitFasilitasMin", "#lmLimitFasilitasMax", "#lmDanaTersediaTalanganFasilitasFund", "lmDanaTersediaTalanganFasilitasStockMin", "#lmDanaTersediaTalanganFasilitasStockMax", "#lmDanaTersediaTalanganFasilitasStockMax",
+                //common
+                "#login_modal", "#showhidebasket", "#navnews", "#navbarIpotnews", ".sidebar.sidebar-right", 
+                "#infoLimit", "#infoOdt", "#infoMargin", "#upgradeFasilitas", "#confirmFasilitas", "#searchBarContainer"
+        };
+
+        for (String sel : selectors) {
+            doc.select(sel).remove();
+        }
+    }
 
     private String removePrefixSuffix(String str) {
     	//be careful: – is different -
-    	//be careful: \n at the end, dont forget to trim()
-    	String[] PREFIX = {"(?i)^JAKARTA\\s*,\\s*investor.id\\s*\\p{Pd}\\s*"};;	//yes, ipot also source its news from other channels
-//    	String[] SUFFIX = {"(Budi/AI)", "(Dow Jones Newswires)", "(Bloomberg/AI)", "(reuters)"};
-    	String[] SUFFIX = {"(?i)\\(\\s*[^)]*\\s*\\)\\s*$"};
-    	str.trim();
+    	String[] PREFIX = {
+    			"(?i)^JAKARTA\\s*,\\s*investor.id\\s*\\p{Pd}\\s*"					//yes, ipot also source its news from other channels
+    			};
+    	String[] SUFFIX = {
+    			"(?i)\\(\\s*[^)]*\\s*\\)\\s*$"										//"(Budi/AI)", "(Dow Jones Newswires)", "(Bloomberg/AI)", "(reuters)"
+    			};
+    	str.trim();																	//be careful: \n at the end, dont forget to trim()
 
     	if (str != null && str.length() > 0) {
         	for (String s : PREFIX) {

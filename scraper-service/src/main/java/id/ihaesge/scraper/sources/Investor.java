@@ -30,21 +30,21 @@ public class Investor extends BaseScraper implements NewsSource {
     }
 
     @Override
-    public List<Content> getNewsList(int scrapLimit, boolean fromSiteMap) throws Exception {
-    	List<Content> list = new ArrayList<>();
+    public List<String> getNewsList(int scrapLimit, boolean fromSiteMap) throws Exception {
+    	List<String> urls = new ArrayList<>();
 
     	if (fromSiteMap) {
-    		list = getNewsListFromSiteMap(scrapLimit);
+    		urls = getNewsListFromSiteMap(scrapLimit);
     	} else {
-    		list = getNewsListFromWebsite(scrapLimit);
+    		urls = getNewsListFromWebsite(scrapLimit);
     	}
 
-    	return list;
+    	return urls;
     }
 
     //in the sitemap, all url in <loc> is categorized, so checking will be done here
-    private List<Content> getNewsListFromSiteMap(int scrapLimit) throws Exception {
-    	List<Content> list = new ArrayList<>();
+    private List<String> getNewsListFromSiteMap(int scrapLimit) throws Exception {
+    	List<String> urls = new ArrayList<>();
         Set<String> seen = new HashSet<>();
 
     	for (String site : sitemap) {    		
@@ -56,23 +56,23 @@ public class Investor extends BaseScraper implements NewsSource {
     	        	if (!seen.contains(href)) {
     	        		seen.add(href);
 
-    	        		if (scrapLimit > 0 && list.size() >= scrapLimit) {
+    	        		if (scrapLimit > 0 && urls.size() >= scrapLimit) {
     	        			break;
     	        		} else {
-    	        			list.add(new Content(href, getSourceName()));	        			
+    	        			urls.add(href);	        			
     	        		}
     	        	}
             	}
             }
     	}
 
-        return list;
+        return urls;
     }
 
-    private List<Content> getNewsListFromWebsite(int scrapLimit) throws Exception {
+    private List<String> getNewsListFromWebsite(int scrapLimit) throws Exception {
         Document doc = Jsoup.connect(MARKET_URL).get();
 
-        List<Content> list = new ArrayList<>();
+        List<String> urls = new ArrayList<>();
         Set<String> seen = new HashSet<>();
 
         Element div = doc.selectFirst("main");
@@ -82,7 +82,7 @@ public class Investor extends BaseScraper implements NewsSource {
 
             //<a href="/market/434116/prasyarat-berat-merger-bumn-karya" class="stretched-link">
             //ada /corporate-action/, /stock/, /crypto/, dll, tapi jika di-click larinya ke /market"
-            if (href.contains("/market/")) {
+            if (href.contains("/market/") && !href.equals(MARKET_URL + "/indeks")) {
             	if (!href.startsWith("http")) {
             		href = BASE_URL + href;
             	}
@@ -90,20 +90,20 @@ public class Investor extends BaseScraper implements NewsSource {
             	if (!seen.contains(href)) {
             		seen.add(href);
 
-	        		if (scrapLimit > 0 && list.size() >= scrapLimit) {
+	        		if (scrapLimit > 0 && urls.size() >= scrapLimit) {
 	        			break;
 	        		} else {
-	        			list.add(new Content(href, getSourceName()));	        			
+	        			urls.add(href);	        			
 	        		}
             	}
             }
         }
 
-        return list;
+        return urls;
     }
 
     @Override
-    public Content getNewsDetail(String url) {
+    public Content getNewsDetail(String url) throws Exception {
     	Content content = null;
     	try {
             Document doc = Jsoup.connect(normalizeUrl(url)).get();
@@ -126,7 +126,6 @@ public class Investor extends BaseScraper implements NewsSource {
                 browser.close();
             }
     	} catch (Exception e) {
-			// TODO: handle exception
     		e.printStackTrace();
 		}
 
@@ -180,9 +179,9 @@ public class Investor extends BaseScraper implements NewsSource {
         return articleContent;
     }
 
-    // JSON-LD PARSER
-    //"datePublished": "2026-03-26T15:47:00+07:00"
     private LocalDateTime extractPublishDate(Document doc) {
+        // JSON-LD PARSER
+        //"datePublished": "2026-03-26T15:47:00+07:00"
     	Elements scripts = doc.select("script[type=application/ld+json]");
         for (Element script : scripts) {
             String json = script.data().trim();
@@ -200,15 +199,15 @@ public class Investor extends BaseScraper implements NewsSource {
         return null;
     }
 
-//    private void removeNoiseInvestor(Document doc) {
-//        String[] selectors = {
-//                ".modal.fade"
-//        };
-//
-//        for (String sel : selectors) {
-//            doc.select(sel).remove();
-//        }
-//    }
+    private void removeNoiseInvestor(Document doc) {
+        String[] selectors = {
+                ".modal.fade"
+        };
+
+        for (String sel : selectors) {
+            doc.select(sel).remove();
+        }
+    }
 
     private boolean isMultiPage(Document doc) {
         return doc.text().contains("Halaman:");
@@ -221,11 +220,11 @@ public class Investor extends BaseScraper implements NewsSource {
 
     private String removePrefixSuffix(String str) {
     	//be careful: – is different -
-    	//be careful: \n at the end, dont forget to trim()
-//    	String[] PREFIX = {"JAKARTA, investor.id -", "JAKARTA, investor.id - ", "JAKARTA, investor.id- ", "JAKARTA, investor.id-", "JAKARTA, investor.id – ", "JAKARTA, investor.id –", "JAKARTA, investor.id– ", "JAKARTA, investor.id–"};	//must in order
-    	String[] PREFIX = {"(?i)^JAKARTA\\s*,\\s*investor.id\\s*\\p{Pd}\\s*"};
+    	String[] PREFIX = {
+    			"(?i)^JAKARTA\\s*,\\s*investor.id\\s*\\p{Pd}\\s*"					//"JAKARTA , investor.id - "
+    			};
     	String[] SUFFIX = {};
-    	str.trim();
+    	str.trim();																	//be careful: \n at the end, dont forget to trim()
 
     	if (str != null && str.length() > 0) {
         	for (String s : PREFIX) {

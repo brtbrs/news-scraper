@@ -22,30 +22,30 @@ public class Ajaib extends BaseScraper implements NewsSource {
     }
 
     @Override
-    public List<Content> getNewsList(int scrapLimit, boolean fromSiteMap) throws Exception {
-    	List<Content> list = new ArrayList<>();
+    public List<String> getNewsList(int scrapLimit, boolean fromSiteMap) throws Exception {
+    	List<String> urls = new ArrayList<>();
 
     	if (fromSiteMap) {
-    		list = getNewsListFromSiteMap(scrapLimit);
+    		urls = getNewsListFromSiteMap(scrapLimit);
     	} else {
-    		list = getNewsListFromWebsite(scrapLimit);
+    		urls = getNewsListFromWebsite(scrapLimit);
     	}
 
-    	return list;
+    	return urls;
     }
 
-    private List<Content> getNewsListFromSiteMap(int scrapLimit) throws Exception {
-    	List<Content> list = new ArrayList<>();
+    private List<String> getNewsListFromSiteMap(int scrapLimit) throws Exception {
+    	List<String> urls = new ArrayList<>();
         Set<String> seen = new HashSet<>();
 
 
-        return list;
+        return urls;
     }
 
-    private List<Content> getNewsListFromWebsite(int scrapLimit) throws Exception {
+    private List<String> getNewsListFromWebsite(int scrapLimit) throws Exception {
         Document doc = Jsoup.connect(BERITA_URL).get();
 
-        List<Content> list = new ArrayList<>();
+        List<String> urls = new ArrayList<>();
         Set<String> seen = new HashSet<>();
 
         //<div class="flex flex-col gap-2">
@@ -61,20 +61,20 @@ public class Ajaib extends BaseScraper implements NewsSource {
             	if (!seen.contains(href)) {
             		seen.add(href);
 
-	        		if (scrapLimit > 0 && list.size() >= scrapLimit) {
+	        		if (scrapLimit > 0 && urls.size() >= scrapLimit) {
 	        			break;
 	        		} else {
-	        			list.add(new Content(href, getSourceName()));	        			
+	        			urls.add(href);	        			
 	        		}
             	}
             }
         }
 
-        return list;
+        return urls;
     }
 
     @Override
-    public Content getNewsDetail(String url) {
+    public Content getNewsDetail(String url) throws Exception {
     	Content content = null;
     	try {
             Document doc = Jsoup.connect(normalizeUrl(url)).get();
@@ -97,7 +97,6 @@ public class Ajaib extends BaseScraper implements NewsSource {
                 browser.close();
             }
     	} catch (Exception e) {
-			// TODO: handle exception
     		e.printStackTrace();
 		}
 
@@ -138,9 +137,9 @@ public class Ajaib extends BaseScraper implements NewsSource {
         return articleContent;
     }
 
-    //<span>Kamis, 26/03/2026</span>
-    //<span>April 10, 2026</span>
     private LocalDateTime extractPublishDate(Document doc) {
+        //<span>Kamis, 26/03/2026</span>
+        //<span>April 10, 2026</span>
         Element el = doc.selectFirst("span:matches(^[A-Za-z]+\\s+\\d{1,2},\\s+\\d{4}$)");
         if (el != null) {
             String publishDate = cleanText(el.text() + " 00:00:01");
@@ -169,12 +168,12 @@ public class Ajaib extends BaseScraper implements NewsSource {
 
     private String removePrefixSuffix(String str) {
     	//be careful: – is different -
-    	//be careful: \n at the end, dont forget to trim()
-//    	String[] PREFIX = {"NERACA", "Jakarta - ", "Jakarta- ", "Jakarta -", "Jakarta-"};	//must in order
-    	String[] PREFIX = {""};
-    	//" - Ajaib"
-    	String[] SUFFIX = {"(?i)\\s*\\p{Pd}\\s*Ajaib", "(?i)\\(\\s*[^)]*\\s*\\)\\s*$"};
-    	str.trim();
+    	String[] PREFIX = {};
+    	String[] SUFFIX = {
+    			"(?i)\\s*\\p{Pd}\\s*Ajaib", 										//" - Ajaib"
+    			"(?i)\\(\\s*[^)]*\\s*\\)\\s*$"
+    			};
+    	str.trim();																	//be careful: \n at the end, dont forget to trim()
 
     	if (str != null && str.length() > 0) {
         	for (String s : PREFIX) {

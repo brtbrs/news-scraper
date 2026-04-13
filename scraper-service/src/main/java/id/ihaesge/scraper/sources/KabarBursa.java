@@ -23,21 +23,21 @@ public class KabarBursa extends BaseScraper implements NewsSource {
     }
 
     @Override
-    public List<Content> getNewsList(int scrapLimit, boolean fromSiteMap) throws Exception {
-    	List<Content> list = new ArrayList<>();
+    public List<String> getNewsList(int scrapLimit, boolean fromSiteMap) throws Exception {
+    	List<String> urls = new ArrayList<>();
 
     	if (fromSiteMap) {
-    		list = getNewsListFromSiteMap(scrapLimit);
+    		urls = getNewsListFromSiteMap(scrapLimit);
     	} else {
-    		list = getNewsListFromWebsite(scrapLimit);
+    		urls = getNewsListFromWebsite(scrapLimit);
     	}
 
-    	return list;
+    	return urls;
     }
 
     //in the sitemap, all url in <loc> is categorized, so checking will be done here
-    private List<Content> getNewsListFromSiteMap(int scrapLimit) throws Exception {
-    	List<Content> list = new ArrayList<>();
+    private List<String> getNewsListFromSiteMap(int scrapLimit) throws Exception {
+    	List<String> urls = new ArrayList<>();
         Set<String> seen = new HashSet<>();
 
     	for (String site : sitemap) {    		
@@ -49,23 +49,23 @@ public class KabarBursa extends BaseScraper implements NewsSource {
     	        	if (!seen.contains(href)) {
     	        		seen.add(href);
 
-    	        		if (scrapLimit > 0 && list.size() >= scrapLimit) {
+    	        		if (scrapLimit > 0 && urls.size() >= scrapLimit) {
     	        			break;
     	        		} else {
-    	        			list.add(new Content(href, getSourceName()));	        			
+    	        			urls.add(href);	        			
     	        		}
     	        	}
             	}
             }
     	}
 
-        return list;
+        return urls;
     }
 
-    private List<Content> getNewsListFromWebsite(int scrapLimit) throws Exception {
+    private List<String> getNewsListFromWebsite(int scrapLimit) throws Exception {
         Document doc = Jsoup.connect(BASE_URL).get();
 
-        List<Content> list = new ArrayList<>();
+        List<String> urls = new ArrayList<>();
         Set<String> seen = new HashSet<>();
 
         //<div class="space-y-6">
@@ -78,16 +78,16 @@ public class KabarBursa extends BaseScraper implements NewsSource {
             	if (!seen.contains(href)) {
             		seen.add(href);
 
-	        		if (scrapLimit > 0 && list.size() >= scrapLimit) {
+	        		if (scrapLimit > 0 && urls.size() >= scrapLimit) {
 	        			break;
 	        		} else {
-	        			list.add(new Content(href, getSourceName()));	        			
+	        			urls.add(href);	        			
 	        		}
             	}
             }
         }
 
-        return list;
+        return urls;
     }
 
     @Override
@@ -121,9 +121,7 @@ public class KabarBursa extends BaseScraper implements NewsSource {
 //              }
             }
     	} catch (Exception e) {
-			// TODO: handle exception
-//    		e.printStackTrace();
-    		throw e;
+    		e.printStackTrace();
 		}
 
         return content;
@@ -188,13 +186,13 @@ public class KabarBursa extends BaseScraper implements NewsSource {
 
     private String removePrefixSuffix(String str) {
     	//be careful: – is different -
-    	//be careful: \n at the end, dont forget to trim()
-//    	String[] PREFIX = {"KABARBURSA.COM - ", "KABARBURSA.COM -", "KABARBURSA.COM- ", "KABARBURSA.COM-", 
-//    						"KABARBURSA.COM – ", "KABARBURSA.COM –", "KABARBURSA.COM– ", "KABARBURSA.COM–"};	//must in order
-    	String[] PREFIX = {"(?i)^KABARBURSA\\.C[O0]M\\s*\\p{Pd}\\s*"};
-//    	String[] SUFFIX = {"(*)"};
-    	String[] SUFFIX = {"(?i)\\(\\s*[^)]*\\s*\\)\\s*$"};
-    	str.trim();
+    	String[] PREFIX = {
+    			"(?i)^KABARBURSA\\.C[O0]M\\s*\\p{Pd}\\s*"							//"KABARBURSA.COM - ", "KABARBURSA.COM -", "KABARBURSA.COM- ", "KABARBURSA.COM-",
+    			};
+    	String[] SUFFIX = {
+    			"(?i)\\(\\s*[^)]*\\s*\\)\\s*$"										//"(*)", "( * )", "( * ) "
+    			};
+    	str.trim();																	//be careful: \n at the end, dont forget to trim()
 
     	if (str != null && str.length() > 0) {
         	for (String s : PREFIX) {

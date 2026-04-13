@@ -37,20 +37,20 @@ public class EmitenNews extends BaseScraper implements NewsSource {
     }
 
     @Override
-    public List<Content> getNewsList(int scrapLimit, boolean fromSiteMap) throws Exception {
-    	List<Content> list = new ArrayList<>();
+    public List<String> getNewsList(int scrapLimit, boolean fromSiteMap) throws Exception {
+    	List<String> urls = new ArrayList<>();
 
     	if (fromSiteMap) {
-    		list = getNewsListFromSiteMap(scrapLimit);
+    		urls = getNewsListFromSiteMap(scrapLimit);
     	} else {
-    		list = getNewsListFromWebsite(scrapLimit);
+    		urls = getNewsListFromWebsite(scrapLimit);
     	}
 
-    	return list;
+    	return urls;
     }
 
-    private List<Content> getNewsListFromSiteMap(int scrapLimit) throws Exception {
-    	List<Content> list = new ArrayList<>();
+    private List<String> getNewsListFromSiteMap(int scrapLimit) throws Exception {
+    	List<String> urls = new ArrayList<>();
         Set<String> seen = new HashSet<>();
 
     	for (String site : sitemap) {
@@ -62,22 +62,22 @@ public class EmitenNews extends BaseScraper implements NewsSource {
 	        	if (!seen.contains(href)) {
 	        		seen.add(href);
 
-	        		if (scrapLimit > 0 && list.size() >= scrapLimit) {
+	        		if (scrapLimit > 0 && urls.size() >= scrapLimit) {
 	        			break;
 	        		} else {
-	        			list.add(new Content(href, getSourceName()));	        			
+	        			urls.add(href);	        			
 	        		}
 	        	}
             }
     	}
 
-        return list;
+        return urls;
     }
 
-    private List<Content> getNewsListFromWebsite(int scrapLimit) throws Exception {
+    private List<String> getNewsListFromWebsite(int scrapLimit) throws Exception {
         Document doc = Jsoup.connect(EMITEN_URL).get();
 
-        List<Content> list = new ArrayList<>();
+        List<String> urls = new ArrayList<>();
         Set<String> seen = new HashSet<>();
 
         //<div class="main-layout" id="headerLayout">
@@ -96,20 +96,20 @@ public class EmitenNews extends BaseScraper implements NewsSource {
             	if (!seen.contains(href)) {
             		seen.add(href);
 
-            		if (scrapLimit > 0 && list.size() >= scrapLimit) {
+            		if (scrapLimit > 0 && urls.size() >= scrapLimit) {
 	        			break;
 	        		} else {
-	        			list.add(new Content(href, getSourceName()));	        			
+	        			urls.add(href);	        			
 	        		}
             	}
             }
         }
 
-        return list;
+        return urls;
     }
 
     @Override
-    public Content getNewsDetail(String url) {
+    public Content getNewsDetail(String url) throws Exception {
     	Content content = null;
     	try {
             Document doc = Jsoup.connect(normalizeUrl(url)).get();
@@ -144,7 +144,6 @@ public class EmitenNews extends BaseScraper implements NewsSource {
             	System.out.println("404404404404404404404404404404");
             }
     	} catch (Exception e) {
-			// TODO: handle exception
     		e.printStackTrace();
 		}
 
@@ -180,8 +179,8 @@ public class EmitenNews extends BaseScraper implements NewsSource {
         return articleContent;
     }
 
-    //<span class="time-posted">26/03/2026, 16:30 WIB</span>
     private LocalDateTime extractPublishDate(Document doc) {
+        //<span class="time-posted">26/03/2026, 16:30 WIB</span>
         Element element = doc.selectFirst("span.time-posted");
         if (element != null) {
         	String[] parts = element.text().replaceAll("WIB", "").trim().split(",");
@@ -196,23 +195,25 @@ public class EmitenNews extends BaseScraper implements NewsSource {
         return null;
     }
 
-//    private void removeNoiseEmitenNews(Document doc) {
-//        String[] selectors = {
-//                ".content-index-header", ".info-author", ".article-header-img", ".news-container.other-emiten-news-wrapper", ".recommendation-news-text"
-//        };
-//
-//        for (String sel : selectors) {
-//            doc.select(sel).remove();
-//        }
-//    }
+    private void removeNoiseEmitenNews(Document doc) {
+        String[] selectors = {
+                ".content-index-header", ".info-author", ".article-header-img", ".news-container.other-emiten-news-wrapper", ".recommendation-news-text"
+        };
+
+        for (String sel : selectors) {
+            doc.select(sel).remove();
+        }
+    }
 
     private String removePrefixSuffix(String str) {
     	//be careful: – is different -
-    	//be careful: \n at the end, dont forget to trim()
-//    	String[] PREFIX = {"EmitenNews.com -", "EmitenNews.com - ", "EmitenNews.com- ", "EmitenNews.com-"};	//must in order
-    	String[] PREFIX = {"(?i)^EmitenNews.com\\s*\\p{Pd}\\s*"};
-    	String[] SUFFIX = {"(?i)\\(\\s*[^)]*\\s*\\)\\s*$"};
-    	str.trim();
+    	String[] PREFIX = {
+    			"(?i)^EmitenNews.com\\s*\\p{Pd}\\s*"								//"EmitenNews.com - "
+    			};
+    	String[] SUFFIX = {
+    			"(?i)\\(\\s*[^)]*\\s*\\)\\s*$"
+    			};
+    	str.trim();																	//be careful: \n at the end, dont forget to trim()
 
     	if (str != null && str.length() > 0) {
         	for (String s : PREFIX) {

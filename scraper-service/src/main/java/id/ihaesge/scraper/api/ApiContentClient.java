@@ -19,11 +19,12 @@ public class ApiContentClient {
         this.httpClient = HttpClient.newHttpClient();
         this.objectMapper = new ObjectMapper();
         this.createContentUrl = apiBaseUrl.endsWith("/")
-                ? apiBaseUrl + "contents"
-                : apiBaseUrl + "/contents";
+                ? apiBaseUrl + "ingest/contents"
+                : apiBaseUrl + "/ingest/contents";
     }
 
-    public void sendContent(Content content) {
+    public int sendContent(Content content) {
+    	int statusCode = 200;
         ApiContentRequest requestBody = new ApiContentRequest(
         		content.getSource() == null ? null : content.getSource().trim(),
         				content.getOriginalTitle(),
@@ -42,7 +43,8 @@ public class ApiContentClient {
                     .build();
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            int statusCode = response.statusCode();
+
+            statusCode = response.statusCode();
             if (statusCode < 200 || statusCode >= 300) {
                 System.out.println("Failed to send content to API. status=" + statusCode + ", url=" + content.getUrl() + ", response=" + response.body());
             }
@@ -54,5 +56,7 @@ public class ApiContentClient {
             System.out.println("Error sending content to API for url=" + content.getUrl() + ": " + e.getMessage());
             e.printStackTrace();
         }
+
+        return statusCode;
     }
 }

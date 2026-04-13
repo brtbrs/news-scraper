@@ -205,6 +205,7 @@ CREATE TABLE pipeline_log (
 
 CREATE INDEX idx_stock_industry ON stock (industry);
 CREATE INDEX idx_stock_status ON stock (status);
+CREATE INDEX idx_content_url ON content (url);
 CREATE INDEX idx_content_type ON content (type);
 CREATE INDEX idx_content_source ON content (source);
 CREATE INDEX idx_content_status ON content (status);
@@ -220,6 +221,16 @@ CREATE INDEX idx_activity_log_user ON activity_log (user_id);
 CREATE INDEX idx_activity_log_content ON activity_log (content);
 CREATE INDEX idx_activity_log_audio ON activity_log (audio);
 CREATE INDEX idx_pipeline_log_source ON pipeline_log (source);
+
+-- ALTER TABLE content DROP COLUMN title_id;
+-- ALTER TABLE content DROP COLUMN title_en;
+-- ALTER TABLE content DROP COLUMN content_id;
+-- ALTER TABLE content DROP COLUMN content_en;
+-- ALTER TABLE content DROP COLUMN sentiment;
+-- ALTER TABLE content DROP COLUMN duplicate;
+-- ALTER TABLE content DROP COLUMN publish_date;
+-- ALTER TABLE content DROP CONSTRAINT fk_content_sentiment;
+-- ALTER TABLE content DROP CONSTRAINT fk_content_duplicate;
 
 -- ALTER TABLE content ALTER COLUMN original_content TYPE TEXT;
 -- ALTER TABLE content ALTER COLUMN original_title TYPE TEXT;

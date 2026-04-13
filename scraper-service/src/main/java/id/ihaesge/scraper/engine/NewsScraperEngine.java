@@ -7,100 +7,95 @@ import id.ihaesge.scraper.api.ApiContentClient;
 import id.ihaesge.scraper.core.*;
 
 public class NewsScraperEngine {
+    private static final byte BREAK_LIMIT = 5;
 	private final List<NewsSource> sources = new ArrayList<>();
 
     public void registerSource(NewsSource source) {
         sources.add(source);
     }
 
-    public List<Content> scrapeAll(int scrapLimit, boolean fromSitemMap) {
+    public void scrapeAll(int scrapLimit, boolean fromSitemMap) {
         ApiContentClient apiContentClient = new ApiContentClient("http://localhost:8080/api");
-        List<Content> results = new ArrayList<>();
-        List<Content> emptyContent = new ArrayList<>();
-        List<Content> four0four = new ArrayList<>();
-        String[] urls = {
+        String[] processedURLs = {
         		};
 
         for (NewsSource source : sources) {
+            List<String> found = new ArrayList<>();
+            List<Content> saved = new ArrayList<>();
+            List<String> skipped = new ArrayList<>();
             int count = 1;
-            int exceptionCount = 0;
-            int four0fourCount = 0;
 
             try {
-                List<Content> newsList = source.getNewsList(scrapLimit, fromSitemMap);
-//                System.out.println("\n===== " + source.getSourceName() + " : " + urls.length + " =====");
-                System.out.println("\n===== " + source.getSourceName() + " : " + newsList.size() + " =====");
+            	//insert new pipeline_log here
 
-                for (Content item : newsList) {		//newsList only contains url not full Content object
+                System.out.println("===== START SCRAPING " + source.getSourceName() + " with limit : " + scrapLimit + " =====");
+                found = source.getNewsList(scrapLimit, fromSitemMap);
+
+                for (String newsURL : found) {		//newsList only contains url not full Content object
+                	//this is to be able to resume scraping without re-scraping already processed urls (especially during scraping from sitemap.xml
+                	//but this require manual work e.g. copying all the urls logged in the console in finally statement into the processedURLs array
+                	//this needs to be done because some sources block scraper
                     boolean alreadyProcessed = false;
-                	for (String url : urls) {
-                		if (item.getUrl().equals(url)) {
+                	for (String processedURL : processedURLs) {
+                		if (newsURL.equals(processedURL)) {
                 			alreadyProcessed = true;
-                			System.out.println("=== ALREADY PROCESSED === " + item.getUrl());
+                			System.out.println("=== ALREADY PROCESSED === " + newsURL);
                 			break;
                 		}
                 	}
 
                 	if (!alreadyProcessed) {
                     	try {
-                            System.out.println("\n***** get content : " + count++ + " ***** " + item.getUrl());
-//                            System.out.println("\n***** get content : " + count++ + " ***** " + url);
-                            Content content = source.getNewsDetail(item.getUrl());
-//                            Content content = source.getNewsDetail(url);
+                            System.out.println("\n***** get news detail : " + count++ + " ***** " + newsURL);
+                            Content content = source.getNewsDetail(newsURL);
 
+                            //sometimes we get 404 or empty content
                             if (content == null) {
-                            	four0four.add(new Content(item.getUrl(), source.getSourceName()));
-//                            	four0four.add(new Content(url, source.getSourceName()));
-                            	four0fourCount++;
-                            	if (four0fourCount > 5) break;
+                            	skipped.add(newsURL);
                             } else {
                             	if (content.getOriginalContent() == null || content.getOriginalContent().trim().length() == 0) {
-                            		emptyContent.add(content);
+                            		skipped.add(newsURL);
                             	} else {
-    	                            results.add(content);
-    	                            System.out.println("\n***** sending content *****" + content.toString());
-    	                            apiContentClient.sendContent(content);
+    	                            int statusCode = apiContentClient.sendContent(content);
+    	                            System.out.println("***** sending content : " + statusCode + " ***** " + content.toString());
+    	                            if (statusCode < 200 || statusCode >= 300) {
+    	                            	skipped.add(newsURL);
+    	                            } else {
+    	                            	saved.add(content);
+    	                            }
                             	}
                             }
                     	} catch (Exception e) {
-                    		System.out.println("=== EXCEPTION : " + item.getUrl());
                     		e.printStackTrace();
-                    		exceptionCount++;
-                    		if (exceptionCount > 5) break;
                     	} finally {
+                        	if (skipped.size() > BREAK_LIMIT) break;		//let's assume, more than this means scraper is already blocked
                     	}
 
-                    	//delay 1 minute
-//                    	if (count % (ThreadLocalRandom.current().nextInt(50, 100)) == 0) {
-//                    		try {
-//                    		    Thread.sleep(ThreadLocalRandom.current().nextInt(30000, 60000)); 
-//                    		} catch (InterruptedException e) {
-//                    			e.printStackTrace();
-//                    		    // Handle or rethrow the exception
-//                    		} finally {
-//                    			System.out.println("=== KELAR DELAY ===");
-//                    		}
-//                    	}
+                    	//delay randomly
+            		    //Thread.sleep(ThreadLocalRandom.current().nextInt(30000, 60000)); 
                 	}
                 }
             } catch (Exception e) {
-                System.out.println("Error in source: " + source.getSourceName());
             	e.printStackTrace();
             } finally {
-        		System.out.println("\n***** PROCESSED URLs : " + results.size() + "\n");
-            	for (Content item : results) {
-            		System.out.println(item.getUrl());
+            	//update pipeline_log here
+
+            	//printout scraping summary
+                System.out.println("\n***** SCRAPING SUMMARY *****");
+                System.out.println("TOTAL FOUND : " + found.size());
+
+        		System.out.println("unPROCESSED URLs : " + skipped.size());
+            	for (String unprocessedURL : skipped) {
+            		System.out.println(unprocessedURL);
             	}
 
-        		System.out.println("\n***** 404 content : " + four0four.size() + "\n");
-            	for (Content item : four0four) {
-            		System.out.println(item.toString());
+            	System.out.println("PROCESSED URLs : " + saved.size());
+            	for (Content savedContent : saved) {
+            		System.out.println(savedContent.getUrl());
             	}
 
-            	System.out.println("=== EXCEPTION : " + exceptionCount);
+                System.out.println("\n===== STOP SCRAPING " + source.getSourceName() + " =====");
             }
         }
-
-        return results;
     }
 }

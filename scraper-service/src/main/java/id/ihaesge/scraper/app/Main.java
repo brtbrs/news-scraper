@@ -10,37 +10,27 @@ import id.ihaesge.scraper.sources.*;
 public class Main {
     public static void main(String[] args) {
         int scrapLimit = readScrapeLimit(args);
-        System.out.println("===== scrape run started with limit : " + scrapLimit + " =====");
-        String apiBaseUrl = System.getenv().getOrDefault("API_BASE_URL", "http://localhost:8080/api");
+//        String apiBaseUrl = System.getenv().getOrDefault("API_BASE_URL", "http://localhost:8080/api");
         String fromSiteMap = System.getenv().getOrDefault("FROM_SITE_MAP", "FALSE");
 
         NewsScraperEngine engine = new NewsScraperEngine();
         registerSources(engine);
 
-        List<Content> results = engine.scrapeAll(scrapLimit, Boolean.valueOf(fromSiteMap).booleanValue());
-//        System.out.println("\n===== scraped " + results.size() + " content rows. Now sending to API: " + apiBaseUrl + " =====");
-
-//        ApiContentClient apiContentClient = new ApiContentClient(apiBaseUrl);
-//        for (Content content : results) {
-//        	System.out.println("===== sending : " + content.getUrl() + " =====");
-//            apiContentClient.sendContent(content);
-//        }
-
-        System.out.println("===== scrape run finished =====");
+        engine.scrapeAll(scrapLimit, Boolean.valueOf(fromSiteMap).booleanValue());
     }
 
     private static void registerSources(NewsScraperEngine engine) {
-//		engine.registerSource(new Bisnis());			//no sitemap
-//		engine.registerSource(new CNBC());				//no sitemap
-//		engine.registerSource(new EmitenNews());		//sitemap is done
-//		engine.registerSource(new EmitenTrust());		//sitemap is halfway done
-//		engine.registerSource(new Investor());			//sitemap is done
-//		engine.registerSource(new IPOTNews());			//no sitemap
-//		engine.registerSource(new KabarBursa());		//sitemap is halfway done 
-//		engine.registerSource(new KataData());			//sitemap is done
-//		engine.registerSource(new Kontan());			//no sitemap
+		engine.registerSource(new Bisnis());			//no sitemap
+		engine.registerSource(new CNBC());				//no sitemap
+		engine.registerSource(new EmitenNews());		//sitemap is done
+		engine.registerSource(new EmitenTrust());		//sitemap is halfway done
+		engine.registerSource(new Investor());			//sitemap is done
+		engine.registerSource(new IPOTNews());			//no sitemap
+		engine.registerSource(new KabarBursa());		//sitemap is halfway done 
+		engine.registerSource(new KataData());			//sitemap is done
+		engine.registerSource(new Kontan());			//no sitemap
 		engine.registerSource(new Neraca());			//no sitemap
-//		engine.registerSource(new StockWatch());		//sitemap is done
+		engine.registerSource(new StockWatch());		//sitemap is done
     }
 
     private static int readScrapeLimit(String[] args) {

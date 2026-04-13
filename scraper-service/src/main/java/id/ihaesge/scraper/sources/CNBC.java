@@ -20,30 +20,30 @@ public class CNBC extends BaseScraper implements NewsSource {
     }
 
     @Override
-    public List<Content> getNewsList(int scrapLimit, boolean fromSiteMap) throws Exception {
-    	List<Content> list = new ArrayList<>();
+    public List<String> getNewsList(int scrapLimit, boolean fromSiteMap) throws Exception {
+    	List<String> urls = new ArrayList<>();
 
     	if (fromSiteMap) {
-    		list = getNewsListFromSiteMap(scrapLimit);
+    		urls = getNewsListFromSiteMap(scrapLimit);
     	} else {
-    		list = getNewsListFromWebsite(scrapLimit);
+    		urls = getNewsListFromWebsite(scrapLimit);
     	}
 
-    	return list;
+    	return urls;
     }
 
-    private List<Content> getNewsListFromSiteMap(int scrapLimit) throws Exception {
-    	List<Content> list = new ArrayList<>();
+    private List<String> getNewsListFromSiteMap(int scrapLimit) throws Exception {
+    	List<String> urls = new ArrayList<>();
         Set<String> seen = new HashSet<>();
 
 
-        return list;
+        return urls;
     }
 
-    private List<Content> getNewsListFromWebsite(int scrapLimit) throws Exception {
+    private List<String> getNewsListFromWebsite(int scrapLimit) throws Exception {
         Document doc = Jsoup.connect(BASE_URL).get();
 
-        List<Content> list = new ArrayList<>();
+        List<String> urls = new ArrayList<>();
         Set<String> seen = new HashSet<>();
 
         // ✅ MULTIPLE containers
@@ -66,24 +66,24 @@ public class CNBC extends BaseScraper implements NewsSource {
                     	if (!seen.contains(href)) {
                     		seen.add(href);
 
-                    		if (scrapLimit > 0 && list.size() >= scrapLimit) {
+                    		if (scrapLimit > 0 && urls.size() >= scrapLimit) {
         	        			break;
         	        		} else {
-        	        			list.add(new Content(href, getSourceName()));	        			
+        	        			urls.add(href);	        			
         	        		}
                     	}
                     }
             	}
             }
 
-            if (scrapLimit > 0 && list.size() >= scrapLimit) break;
+            if (scrapLimit > 0 && urls.size() >= scrapLimit) break;
         }
 
-        return list;
+        return urls;
     }
 
     @Override
-    public Content getNewsDetail(String url) {
+    public Content getNewsDetail(String url) throws Exception {
     	Content content = null;
     	try {
             Document doc = Jsoup.connect(normalizeUrl(url)).get();
@@ -106,7 +106,6 @@ public class CNBC extends BaseScraper implements NewsSource {
                 browser.close();
             }
     	} catch (Exception e) {
-			// TODO: handle exception
     		e.printStackTrace();
 		}
 
@@ -143,8 +142,8 @@ public class CNBC extends BaseScraper implements NewsSource {
         return articleContent;
     }
 
-    //<meta name="publishdate" content="2026/03/26 14:05:21" />
     private LocalDateTime extractPublishDate(Document doc) {
+        //<meta name="publishdate" content="2026/03/26 14:05:21" />
         Element meta = doc.selectFirst("meta[name=publishdate]");
         if (meta != null) {
             String publishDate = cleanText(meta.attr("content"));
@@ -158,23 +157,23 @@ public class CNBC extends BaseScraper implements NewsSource {
         return null;
     }
 
-//    private void removeNoiseCNBC(Document doc) {
-//        String[] selectors = {
-//                "figcaption", ".topik2"
-//        };
-//
-//        for (String sel : selectors) {
-//            doc.select(sel).remove();
-//        }
-//    }
+    private void removeNoiseCNBC(Document doc) {
+        String[] selectors = {
+                "figcaption", ".topik2"
+        };
+
+        for (String sel : selectors) {
+            doc.select(sel).remove();
+        }
+    }
 
     private String removePrefixSuffix(String str) {
     	//be careful: – is different -
-    	//be careful: \n at the end, dont forget to trim()
-//    	String[] PREFIX = {"Jakarta, CNBC Indonesia —", "Jakarta, CNBC Indonesia — ", "Jakarta, CNBC Indonesia— ", "Jakarta, CNBC Indonesia—"};	//must in order
-    	String[] PREFIX = {"(?i)^Jakarta\\s*,\\s*CNBC Indonesia\\s*\\p{Pd}\\s*"};
+    	String[] PREFIX = {
+    			"(?i)^Jakarta\\s*,\\s*CNBC Indonesia\\s*\\p{Pd}\\s*"				//"Jakarta , CNBC Indonesia — "
+    			};
     	String[] SUFFIX = {};
-    	str.trim();
+    	str.trim();																	//be careful: \n at the end, dont forget to trim()
 
     	if (str != null && str.length() > 0) {
         	for (String s : PREFIX) {

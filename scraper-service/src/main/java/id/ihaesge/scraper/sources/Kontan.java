@@ -20,30 +20,30 @@ public class Kontan extends BaseScraper implements NewsSource {
     }
 
     @Override
-    public List<Content> getNewsList(int scrapLimit, boolean fromSiteMap) throws Exception {
-    	List<Content> list = new ArrayList<>();
+    public List<String> getNewsList(int scrapLimit, boolean fromSiteMap) throws Exception {
+    	List<String> urls = new ArrayList<>();
 
     	if (fromSiteMap) {
-    		list = getNewsListFromSiteMap(scrapLimit);
+    		urls = getNewsListFromSiteMap(scrapLimit);
     	} else {
-    		list = getNewsListFromWebsite(scrapLimit);
+    		urls = getNewsListFromWebsite(scrapLimit);
     	}
 
-    	return list;
+    	return urls;
     }
 
-    private List<Content> getNewsListFromSiteMap(int scrapLimit) throws Exception {
-    	List<Content> list = new ArrayList<>();
+    private List<String> getNewsListFromSiteMap(int scrapLimit) throws Exception {
+    	List<String> urls = new ArrayList<>();
         Set<String> seen = new HashSet<>();
 
 
-        return list;
+        return urls;
     }
 
-    private List<Content> getNewsListFromWebsite(int scrapLimit) throws Exception {
+    private List<String> getNewsListFromWebsite(int scrapLimit) throws Exception {
         Document doc = Jsoup.connect(BASE_URL).get();
 
-        List<Content> list = new ArrayList<>();
+        List<String> urls = new ArrayList<>();
         Set<String> seen = new HashSet<>();
 
         Element div = doc.selectFirst("div.list-berita");
@@ -56,21 +56,21 @@ public class Kontan extends BaseScraper implements NewsSource {
                 	if (!seen.contains(href)) {
                 		seen.add(href);
 
-    	        		if (scrapLimit > 0 && list.size() >= scrapLimit) {
+    	        		if (scrapLimit > 0 && urls.size() >= scrapLimit) {
     	        			break;
     	        		} else {
-    	        			list.add(new Content(href, getSourceName()));	        			
+    	        			urls.add(href);	        			
     	        		}
                 	}
 //            	}
             }
         }
 
-        return list;
+        return urls;
     }
 
     @Override
-    public Content getNewsDetail(String url) {
+    public Content getNewsDetail(String url) throws Exception {
     	Content content = null;
     	try {
             Document doc = Jsoup.connect(normalizeUrl(url)).get();
@@ -93,7 +93,6 @@ public class Kontan extends BaseScraper implements NewsSource {
                 browser.close();
             }
     	} catch (Exception e) {
-			// TODO: handle exception
     		e.printStackTrace();
 		}
 
@@ -122,7 +121,6 @@ public class Kontan extends BaseScraper implements NewsSource {
                 }
             }
 
-
             articleContent = new Content(title, ldt, removePrefixSuffix(sb.toString().trim()), url, getSourceName());
         } catch (Exception e) {
         	e.printStackTrace();
@@ -131,8 +129,8 @@ public class Kontan extends BaseScraper implements NewsSource {
         return articleContent;
     }
 
-    //<meta name="content_PublishedDate" content="2026-03-26 12:14:10" />
     private LocalDateTime extractPublishDate(Document doc) {
+        //<meta name="content_PublishedDate" content="2026-03-26 12:14:10" />
         Element meta = doc.selectFirst("meta[name=content_PublishedDate]");
         if (meta != null) {
             String publishDate = cleanText(meta.attr("content"));
@@ -146,38 +144,24 @@ public class Kontan extends BaseScraper implements NewsSource {
         return null;
     }
 
-//    private LocalDateTime extractDateTime(String text) {
-//        //Pattern p = Pattern.compile(".*?(\\d{1,2}\\s\\w+\\s\\d{4})\\s*/\\s*(\\d{2}:\\d{2}).*");
-//        Pattern p = Pattern.compile(".*?(\\d{1,2}\\s(?:Januari|Februari|Maret|April|Mei|Juni|Juli|Agustus|September|Oktober|November|Desember)\\s\\d{4})\\s*/\\s*(\\d{2}:\\d{2})");
-//        Matcher m = p.matcher(text);
-//
-//        if (m.find()) {
-//        	String combined = m.group(1) + " " + m.group(2);
-//        	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMMM yyyy HH:mm", Locale.of("id", "ID"));
-//        	LocalDateTime ldt = LocalDateTime.parse(combined, formatter);
-//
-//        	return ldt;
-//        }
-//        return null;
-//    }
+    private void removeNoiseKontan(Document doc) {
+        String[] selectors = {
+                ".track-bacajuga-inside", ".track-gnews"
+        };
 
-//    private void removeNoiseKontan(Document doc) {
-//        String[] selectors = {
-//                ".track-bacajuga-inside", ".track-gnews"
-//        };
-//
-//        for (String sel : selectors) {
-//            doc.select(sel).remove();
-//        }
-//    }
+        for (String sel : selectors) {
+            doc.select(sel).remove();
+        }
+    }
 
     private String removePrefixSuffix(String str) {
     	//be careful: – is different -
-    	//be careful: \n at the end, dont forget to trim()
-    	//String[] PREFIX = {"(?i)^KONTAN.CO.ID\\s*\\p{Pd}\\s*", "JAKARTA.", "JAKARTA"};	//must in order
-    	String[] PREFIX = {"(?i)^KONTAN.CO.ID\\s*\\p{Pd}\\s*", "(?i)^JAKARTA.\\s*"};
+    	String[] PREFIX = {
+    			"(?i)^KONTAN.CO.ID\\s*\\p{Pd}\\s*", 								//"KONTAN.CO.ID - "
+    			"(?i)^JAKARTA.\\s*"													//"JAKARTA. ", "JAKARTA"
+    			};
     	String[] SUFFIX = {};
-    	str.trim();
+    	str.trim();																	//be careful: \n at the end, dont forget to trim()
 
     	if (str != null && str.length() > 0) {
         	for (String s : PREFIX) {

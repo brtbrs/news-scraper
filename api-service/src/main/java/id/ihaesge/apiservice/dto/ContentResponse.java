@@ -10,8 +10,6 @@ public record ContentResponse(
         String originalContent,
         String url,
         String originalLanguage,
-        Instant originalPublishDate,
-        Instant publishDate,
-        Instant createdAt
+        Instant originalPublishDate
 ) {
 }

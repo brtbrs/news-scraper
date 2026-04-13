@@ -89,21 +89,21 @@ public class KataData extends BaseScraper implements NewsSource {
     }
 
     @Override
-    public List<Content> getNewsList(int scrapLimit, boolean fromSiteMap) throws Exception {
-    	List<Content> list = new ArrayList<>();
+    public List<String> getNewsList(int scrapLimit, boolean fromSiteMap) throws Exception {
+    	List<String> urls = new ArrayList<>();
 
     	if (fromSiteMap) {
-    		list = getNewsListFromSiteMap(scrapLimit);
+    		urls = getNewsListFromSiteMap(scrapLimit);
     	} else {
-    		list = getNewsListFromWebsite(scrapLimit);
+    		urls = getNewsListFromWebsite(scrapLimit);
     	}
 
-    	return list;
+    	return urls;
     }
 
     //in the sitemap, all url in <loc> is categorized, so checking will be done here
-    private List<Content> getNewsListFromSiteMap(int scrapLimit) throws Exception {
-    	List<Content> list = new ArrayList<>();
+    private List<String> getNewsListFromSiteMap(int scrapLimit) throws Exception {
+    	List<String> urls = new ArrayList<>();
         Set<String> seen = new HashSet<>();
 
     	for (String site : sitemap) {
@@ -115,23 +115,23 @@ public class KataData extends BaseScraper implements NewsSource {
     	        	if (!seen.contains(href)) {
     	        		seen.add(href);
 
-    	        		if (scrapLimit > 0 && list.size() >= scrapLimit) {
+    	        		if (scrapLimit > 0 && urls.size() >= scrapLimit) {
     	        			break;
     	        		} else {
-    	        			list.add(new Content(href, getSourceName()));	        			
+    	        			urls.add(href);	        			
     	        		}
     	        	}
             	}
             }
     	}
 
-        return list;
+        return urls;
     }
 
-    private List<Content> getNewsListFromWebsite(int scrapLimit) throws Exception {
+    private List<String> getNewsListFromWebsite(int scrapLimit) throws Exception {
         Document doc = Jsoup.connect(BASE_URL).get();
 
-        List<Content> list = new ArrayList<>();
+        List<String> urls = new ArrayList<>();
         Set<String> seen = new HashSet<>();
 
         //<div class="latest-news">
@@ -143,19 +143,21 @@ public class KataData extends BaseScraper implements NewsSource {
             //<a href="https://katadata.co.id/finansial/bursa/69cf770c1292f/bumn-karya-kian-mengkhawatirkan-rugi-ptpp-dan-wika-bengkak-berkali-kali-lipat">
             //https://katadata.co.id/finansial/korporasi/69d7aff228991/bank-ocbc-nisp-respons-dorongan-ojk-akui-tak-mudah-naik-kelas-ke-kbmi-4
             if (href.startsWith(FINANSIAL_URL) || href.startsWith(KORPORASI_URL)) {
-            	if (!seen.contains(href)) {
-            		seen.add(href);
+            	if (href.length() > FINANSIAL_URL.length() || href.length() > KORPORASI_URL.length()) {
+                	if (!seen.contains(href)) {
+                		seen.add(href);
 
-	        		if (scrapLimit > 0 && list.size() >= scrapLimit) {
-	        			break;
-	        		} else {
-	        			list.add(new Content(href, getSourceName()));	        			
-	        		}
+    	        		if (scrapLimit > 0 && urls.size() >= scrapLimit) {
+    	        			break;
+    	        		} else {
+    	        			urls.add(href);	        			
+    	        		}
+                	}
             	}
             }
         }
 
-        return list;
+        return urls;
     }
 
     @Override
@@ -183,9 +185,7 @@ public class KataData extends BaseScraper implements NewsSource {
 //                browser.close();
 //            }
     	} catch (Exception e) {
-			// TODO: handle exception
-//    		e.printStackTrace();
-    		throw e;
+    		e.printStackTrace();
 		}
 
         return content;
@@ -238,22 +238,21 @@ public class KataData extends BaseScraper implements NewsSource {
         return null;
     }
 
-//    private void removeNoiseKataData(Document doc) {
-//        String[] selectors = {
-//                ".content-index-header", ".info-author", ".article-header-img", ".news-container.other-emiten-news-wrapper", ".recommendation-news-text"
-//        };
-//
-//        for (String sel : selectors) {
-//            doc.select(sel).remove();
-//        }
-//    }
+    private void removeNoiseKataData(Document doc) {
+        String[] selectors = {
+                ".content-index-header", ".info-author", ".article-header-img", ".news-container.other-emiten-news-wrapper", ".recommendation-news-text"
+        };
+
+        for (String sel : selectors) {
+            doc.select(sel).remove();
+        }
+    }
 
     private String removePrefixSuffix(String str) {
     	//be careful: – is different -
-    	//be careful: \n at the end, dont forget to trim()
-    	String[] PREFIX = {};	//must in order
+    	String[] PREFIX = {};
     	String[] SUFFIX = {};
-    	str.trim();
+    	str.trim();																	//be careful: \n at the end, dont forget to trim()
 
     	if (str != null && str.length() > 0) {
         	for (String s : PREFIX) {
