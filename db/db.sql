@@ -73,12 +73,12 @@ CREATE TABLE stock (
     CONSTRAINT fk_stock_status FOREIGN KEY (status) REFERENCES attribute (id) ON DELETE RESTRICT
 );
 
-CREATE TABLE stock_alias (
+CREATE TABLE tag_alias (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    stock UUID NOT NULL,
+    tag VARCHAR(25) NOT NULL,
     alias VARCHAR(255) NOT NULL,
-    CONSTRAINT fk_stock_alias_stock FOREIGN KEY (stock) REFERENCES stock (id) ON DELETE CASCADE,
-    CONSTRAINT uq_stock_alias UNIQUE (stock, alias)
+    CONSTRAINT fk_tag_alias_tag FOREIGN KEY (tag) REFERENCES stock (ticker) ON DELETE CASCADE,
+    CONSTRAINT uq_tag_alias UNIQUE (tag, alias)
 );
 
 CREATE TABLE corporate_event (
