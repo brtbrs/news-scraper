@@ -32,7 +32,7 @@ Base path: `/api`
 - `/api/stocks`
 - `/api/stock-aliases`
 - `/api/corporate-events`
-- `/api/content-stocks`
+- `/api/content-tags`
 - `/api/audios`
 - `/api/app-users`
 - `/api/user-profiles`

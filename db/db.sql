@@ -129,13 +129,12 @@ CREATE TABLE content_ai (
     CONSTRAINT fk_content_ai_duplicate FOREIGN KEY (duplicate) REFERENCES content (id) ON DELETE SET NULL
 );
 
-CREATE TABLE content_stock (
+CREATE TABLE content_tag (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     content UUID NOT NULL,
-    stock UUID NOT NULL,
-    CONSTRAINT fk_content_stock_content FOREIGN KEY (content) REFERENCES content (id) ON DELETE CASCADE,
-    CONSTRAINT fk_content_stock_stock FOREIGN KEY (stock) REFERENCES stock (id) ON DELETE CASCADE,
-    CONSTRAINT uq_content_stock UNIQUE (content, stock)
+    tag VARCHAR(25) NOT NULL,
+    CONSTRAINT fk_content_tag_content FOREIGN KEY (content) REFERENCES content (id) ON DELETE CASCADE,
+    CONSTRAINT uq_content_tag UNIQUE (content, tag)
 );
 
 CREATE TABLE audio (
@@ -214,8 +213,8 @@ CREATE INDEX idx_content_original_publish_date ON content (original_publish_date
 CREATE INDEX idx_content_ai_sentiment ON content_ai (sentiment);
 CREATE INDEX idx_content_ai_publish_date ON content_ai (publish_date);
 CREATE INDEX idx_corporate_event_stock ON corporate_event (stock);
-CREATE INDEX idx_content_stock_content ON content_stock (content);
-CREATE INDEX idx_content_stock_stock ON content_stock (stock);
+CREATE INDEX idx_content_tag_content ON content_tag (content);
+CREATE INDEX idx_content_tag_tag ON content_tag (tag);
 CREATE INDEX idx_watchlist_user ON watchlist (user_id);
 CREATE INDEX idx_watchlist_stock ON watchlist (stock);
 CREATE INDEX idx_activity_log_user ON activity_log (user_id);
