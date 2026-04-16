@@ -6,5 +6,5 @@ import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 
 import java.util.UUID;
 
-@RepositoryRestResource(path = "stock-aliases")
+@RepositoryRestResource(path = "tag-aliases")
 public interface StockAliasRepository extends JpaRepository<StockAliasEntity, UUID> {}

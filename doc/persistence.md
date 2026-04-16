@@ -30,7 +30,7 @@ Base path: `/api`
 - `/api/industries`
 - `/api/sub-industries`
 - `/api/stocks`
-- `/api/stock-aliases`
+- `/api/tag-aliases`
 - `/api/corporate-events`
 - `/api/content-tags`
 - `/api/audios`
