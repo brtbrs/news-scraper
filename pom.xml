@@ -18,6 +18,7 @@
     <modules>
         <module>scraper-service</module>
         <module>api-service</module>
+        <module>tagger-service</module>
     </modules>
 
     <dependencies>

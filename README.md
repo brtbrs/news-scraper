@@ -1,15 +1,17 @@
 # News Scraper Microservices
 
-This repository is split into two services:
+This repository is split into three services:
 
 - `scraper-service`: CLI scraper job that fetches news and pushes results to API over HTTP.
 - `api-service`: Spring Boot REST API for PostgreSQL persistence and article retrieval.
+- `tagger-service`: CLI tagging job that tags content by source/date and updates content status.
 
 ## Project structure
 
 - `/scraper-service`
 - `/api-service`
 - `/db`
+- `/tagger-service`
 - `/docker-compose.yml`
 
 ## 1) Run `api-service` + PostgreSQL with Docker
@@ -61,7 +63,16 @@ Environment variables:
 
 - `API_BASE_URL` (default: `http://localhost:8080/api`)
 
-## 4) Run scraper as cron job
+## 4) Run `tagger-service` manually
+
+From repository root:
+
+```bash
+mvn -pl tagger-service compile
+API_BASE_URL=http://localhost:8080/api mvn -pl tagger-service exec:java -Dexec.mainClass=id.ihaesge.tagger.app.Main -Dexec.args="--source=Bisnis --from=2026-04-01 --to=2026-04-15"
+```
+
+## 5) Run scraper as cron job
 
 Example cron entry (runs every hour):
 
@@ -76,4 +87,19 @@ Each service can be built independently:
 ```bash
 mvn -pl api-service clean package
 mvn -pl scraper-service clean package
+mvn -pl tagger-service clean package
 ```
+
+## Content lifecycle
+
+Content moves through these statuses:
+
+`PENDING -> TAGGED / UNTAGGED -> DEDUPED -> TRANSLATED -> SUMMARIZED -> LABELED`
+
+- `PENDING`: newly ingested from scraper.
+- `TAGGED`: one or more tags were matched from `tag_alias.alias` and saved to `content_tag.tag`.
+- `UNTAGGED`: no aliases matched.
+- `DEDUPED`: duplicate check completed.
+- `TRANSLATED`: translation completed.
+- `SUMMARIZED`: summarization completed.
+- `LABELED`: final labeling completed.
