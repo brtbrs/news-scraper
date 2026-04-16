@@ -64,10 +64,26 @@ public class ContentService {
         return contentRepository.findAll().stream().map(this::toResponse).toList();
     }
 
+    public List<ContentResponse> getContentsBySourceAndDateRange(String source, Instant from, Instant to) {
+        return contentRepository.findBySourceAndPublishDateRange(source, from, to).stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
     public ContentResponse getContent(UUID id) {
         ContentEntity content = contentRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Content not found: " + id));
         return toResponse(content);
+    }
+
+    @Transactional
+    public void updateStatus(UUID id, String statusCode) {
+        ContentEntity content = contentRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Content not found: " + id));
+
+        AttributeEntity status = resolveAttribute(CONTENT_STATUS, statusCode);
+        content.setStatus(status);
+        contentRepository.save(content);
     }
 
     private SourceEntity resolveSource(String sourceName) {
@@ -107,6 +123,7 @@ public class ContentService {
                 entity.getOriginalContent(),
                 entity.getUrl(),
                 entity.getOriginalLanguage(),
+                entity.getStatus().getCode(),
                 entity.getOriginalPublishDate()
         );
     }
