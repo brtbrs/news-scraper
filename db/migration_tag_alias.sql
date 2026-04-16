@@ -16,8 +16,7 @@ WHERE s.id = ta.stock_id;
 ALTER TABLE tag_alias ALTER COLUMN tag SET NOT NULL;
 ALTER TABLE tag_alias DROP COLUMN stock_id;
 
-ALTER TABLE tag_alias
-    ADD CONSTRAINT fk_tag_alias_tag FOREIGN KEY (tag) REFERENCES stock (ticker) ON DELETE CASCADE;
+ALTER TABLE tag_alias DROP CONSTRAINT IF EXISTS fk_tag_alias_tag;
 
 ALTER TABLE tag_alias
     ADD CONSTRAINT uq_tag_alias UNIQUE (tag, alias);
