@@ -18,7 +18,7 @@ import java.util.regex.*;
 
 public class Investor extends BaseScraper implements NewsSource {
     private final String BASE_URL = "https://investor.id";
-    private final String MARKET_URL = BASE_URL + "/market/";
+    private final String MARKET_URL = BASE_URL + "/market";
 	private final String[] sitemap = {
 //			"https://investor.id/sitemap_news.xml",		//done
 //			"https://investor.id/sitemap_post.xml"		//done

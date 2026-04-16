@@ -9,6 +9,7 @@ import id.ihaesge.scraper.core.*;
 
 public class NewsScraperEngine {
     private static final byte BREAK_LIMIT = 5;
+    private static final String API_URL = "http://localhost:8080/api";
 	private final List<NewsSource> sources = new ArrayList<>();
 
     public void registerSource(NewsSource source) {
@@ -16,8 +17,8 @@ public class NewsScraperEngine {
     }
 
     public void scrapeAll(int scrapLimit, boolean fromSitemMap) {
-        ApiContentClient apiContentClient = new ApiContentClient("http://localhost:8080/api");
-        ApiPipelineLogClient apiPipelineLogClient = new ApiPipelineLogClient("http://localhost:8080/api");
+        ApiContentClient apiContentClient = new ApiContentClient(API_URL);
+        ApiPipelineLogClient apiPipelineLogClient = new ApiPipelineLogClient(API_URL);
         String[] processedURLs = {
         		};
 
@@ -78,11 +79,11 @@ public class NewsScraperEngine {
             		    //Thread.sleep(ThreadLocalRandom.current().nextInt(30000, 60000)); 
                 	}
                 }
+
+                apiPipelineLogClient.updateFinishLog(pipelineLogId, found.size(), saved.size());
             } catch (Exception e) {
             	e.printStackTrace();
             } finally {
-            	apiPipelineLogClient.updateFinishLog(pipelineLogId, found.size(), saved.size());
-
             	//printout scraping summary
                 System.out.println("\n***** SCRAPING SUMMARY *****");
                 System.out.println("TOTAL FOUND : " + found.size());

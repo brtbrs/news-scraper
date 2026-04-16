@@ -17,6 +17,7 @@ public class Main {
         registerSources(engine);
 
         engine.scrapeAll(scrapLimit, Boolean.valueOf(fromSiteMap).booleanValue());
+        System.exit(0);
     }
 
     private static void registerSources(NewsScraperEngine engine) {

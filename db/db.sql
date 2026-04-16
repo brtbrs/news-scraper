@@ -8,6 +8,7 @@
 -- 6) add NOT BLANK-like checks for critical text columns
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
+CREATE EXTENSION IF NOT EXISTS vector;
 
 CREATE TABLE attribute (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
