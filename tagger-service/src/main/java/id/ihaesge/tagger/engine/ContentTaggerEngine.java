@@ -28,15 +28,15 @@ public class ContentTaggerEngine {
 
     public void run(String source, Instant from, Instant to) {
         List<TagAliasItem> aliases = apiTaggingClient.getTagAliases();
-        List<ContentItem> contents = apiContentClient.getContentsBySourceAndDateRange(source, from, to);
+        List<ContentItem> contents = apiContentClient.getContentsBy(source, from, to, "PENDING");
 
         System.out.println("Tagging source=" + source + ", from=" + from + ", to=" + to + ", contents=" + contents.size());
         for (ContentItem content : contents) {
-            processSingleContent(content, aliases);
+            tagSingleContent(content, aliases);
         }
     }
 
-    private void processSingleContent(ContentItem content, List<TagAliasItem> aliases) {
+    private void tagSingleContent(ContentItem content, List<TagAliasItem> aliases) {
         String fullText = ((content.originalTitle() == null ? "" : content.originalTitle()) + " "
                 + (content.originalContent() == null ? "" : content.originalContent())).trim();
 

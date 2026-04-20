@@ -16,15 +16,17 @@ public interface ContentRepository extends JpaRepository<ContentEntity, UUID> {
     Optional<ContentEntity> findByUrl(String url);
 
     @Query("""
-            select c from ContentEntity c
-            where lower(c.source.name) = lower(:source)
+            SELECT c FROM ContentEntity c
+            WHERE lower(c.source.name) = lower(:source)
               and c.originalPublishDate >= :from
               and c.originalPublishDate <= :to
-            order by c.originalPublishDate desc
+              and c.status = :status 
+            ORDER BY c.originalPublishDate DESC
             """)
-    List<ContentEntity> findBySourceAndPublishDateRange(
+    List<ContentEntity> findBy(
             @Param("source") String source,
             @Param("from") Instant from,
-            @Param("to") Instant to
+            @Param("to") Instant to,
+            @Param("source") String status
     );
 }

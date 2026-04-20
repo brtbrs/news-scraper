@@ -9,8 +9,8 @@ import java.time.ZoneOffset;
 public class Main {
     public static void main(String[] args) {
         String source = readRequiredArg(args, "--source=");
-        LocalDate fromDate = LocalDate.parse(readRequiredArg(args, "--from="));
-        LocalDate toDate = LocalDate.parse(readRequiredArg(args, "--to="));
+        LocalDate fromDate = LocalDate.parse(readRequiredArg(args, "--from="));		//yyyy-mm-dd
+        LocalDate toDate = LocalDate.parse(readRequiredArg(args, "--to="));			//yyyy-mm-dd
 
         String apiBaseUrl = System.getenv().getOrDefault("API_BASE_URL", "http://localhost:8080/api");
 

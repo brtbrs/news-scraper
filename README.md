@@ -56,7 +56,8 @@ From repository root:
 
 ```bash
 mvn -pl scraper-service compile
-API_BASE_URL=http://localhost:8080/api FROM_SITE_MAP=FALSE mvn -pl scraper-service exec:java -Dexec.args="--limit=5"
+API_BASE_URL=http://localhost:8080/api mvn -pl scraper-service exec:java -Dexec.args="--limit=5 --source=ALL --from=WEBSITE"
+API_BASE_URL=http://localhost:8080/api mvn -pl scraper-service exec:java -Dexec.args="--limit=5 --source=STOCKWATCH --from=SITEMAP"
 ```
 
 Environment variables:
@@ -69,7 +70,7 @@ From repository root:
 
 ```bash
 mvn -pl tagger-service compile
-API_BASE_URL=http://localhost:8080/api mvn -pl tagger-service exec:java -Dexec.mainClass=id.ihaesge.tagger.app.Main -Dexec.args="--source=Bisnis --from=2026-04-01 --to=2026-04-15"
+API_BASE_URL=http://localhost:8080/api mvn -pl tagger-service exec:java -Dexec.mainClass=id.ihaesge.tagger.app.Main -Dexec.args="--source=BISNIS --from=2026-04-01 --to=2026-04-15"
 ```
 
 ## 5) Run scraper as cron job
@@ -77,7 +78,7 @@ API_BASE_URL=http://localhost:8080/api mvn -pl tagger-service exec:java -Dexec.m
 Example cron entry (runs every hour):
 
 ```cron
-0 * * * * cd /path/to/news-scraper && API_BASE_URL=http://localhost:8080/api /usr/bin/mvn -q -pl scraper-service exec:java -Dexec.args="--limit=5"
+0 * * * * cd /path/to/news-scraper && API_BASE_URL=http://localhost:8080/api /usr/bin/mvn -q -pl scraper-service exec:java -Dexec.args="--limit=0 --source=ALL --from=WEBSITE"
 ```
 
 ## Independent Maven builds

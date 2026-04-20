@@ -16,7 +16,7 @@ public class NewsScraperEngine {
         sources.add(source);
     }
 
-    public void scrapeAll(int scrapLimit, boolean fromSitemMap) {
+    public void scrape(int scrapLimit, String from) {
         ApiContentClient apiContentClient = new ApiContentClient(API_URL);
         ApiPipelineLogClient apiPipelineLogClient = new ApiPipelineLogClient(API_URL);
         String[] processedURLs = {
@@ -33,7 +33,7 @@ public class NewsScraperEngine {
             	pipelineLogId = apiPipelineLogClient.createStartLog(source.getSourceName());
 
                 System.out.println("===== START SCRAPING " + source.getSourceName() + " with limit : " + scrapLimit + " =====");
-                found = source.getNewsList(scrapLimit, fromSitemMap);
+                found = source.getNewsList(scrapLimit, from);
 
                 for (String newsURL : found) {		//newsList only contains url not full Content object
                 	//this is to be able to resume scraping without re-scraping already processed urls (especially during scraping from sitemap.xml
