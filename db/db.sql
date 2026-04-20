@@ -238,3 +238,20 @@ CREATE INDEX idx_pipeline_log_source ON pipeline_log (source);
 -- ALTER TABLE content ALTER COLUMN url TYPE TEXT;
 
 -- SELECT column_name, data_type, character_maximum_length FROM information_schema.columns WHERE table_name = 'content';
+
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+CREATE INDEX IF NOT EXISTS idx_content_original_title_trgm
+    ON content USING gin (original_title gin_trgm_ops);
+
+CREATE INDEX IF NOT EXISTS idx_content_original_content_trgm
+    ON content USING gin (original_content gin_trgm_ops);
+
+CREATE INDEX IF NOT EXISTS idx_tag_alias_alias_trgm
+    ON tag_alias USING gin (alias gin_trgm_ops);
+
+ALTER TABLE content_tag
+    ADD COLUMN IF NOT EXISTS tagged_from VARCHAR(25);
+
+ALTER TABLE content_tag
+    ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
