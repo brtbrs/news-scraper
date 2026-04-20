@@ -13,8 +13,8 @@ import java.time.ZoneOffset;
 public class Main {
     public static void main(String[] args) {
         String source = readRequiredArg(args, "--source=");
-        LocalDate fromDate = LocalDate.parse(readRequiredArg(args, "--from="));
-        LocalDate toDate = LocalDate.parse(readRequiredArg(args, "--to="));
+        LocalDate fromDate = LocalDate.parse(readRequiredArg(args, "--from="));		//yyyy-mm-dd
+        LocalDate toDate = LocalDate.parse(readRequiredArg(args, "--to="));			//yyyy-mm-dd
 
         String jdbcUrl = readConfig("TAGGER_DB_URL", "jdbc:postgresql://localhost:5432/news");
         String jdbcUser = readConfig("TAGGER_DB_USER", "postgres");

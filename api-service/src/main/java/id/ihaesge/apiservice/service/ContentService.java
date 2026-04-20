@@ -64,8 +64,8 @@ public class ContentService {
         return contentRepository.findAll().stream().map(this::toResponse).toList();
     }
 
-    public List<ContentResponse> getContentsBySourceAndDateRange(String source, Instant from, Instant to) {
-        return contentRepository.findBySourceAndPublishDateRange(source, from, to).stream()
+    public List<ContentResponse> getContentsBy(String source, Instant from, Instant to, String status) {
+        return contentRepository.findBy(source, from, to, status).stream()
                 .map(this::toResponse)
                 .toList();
     }

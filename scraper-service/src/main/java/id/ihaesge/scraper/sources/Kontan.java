@@ -20,12 +20,12 @@ public class Kontan extends BaseScraper implements NewsSource {
     }
 
     @Override
-    public List<String> getNewsList(int scrapLimit, boolean fromSiteMap) throws Exception {
+    public List<String> getNewsList(int scrapLimit, String from) throws Exception {
     	List<String> urls = new ArrayList<>();
 
-    	if (fromSiteMap) {
+    	if (from.equalsIgnoreCase(SITEMAP)) {
     		urls = getNewsListFromSiteMap(scrapLimit);
-    	} else {
+    	} else if (from.equalsIgnoreCase(WEBSITE)) {
     		urls = getNewsListFromWebsite(scrapLimit);
     	}
 

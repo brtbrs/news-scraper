@@ -45,9 +45,10 @@ public class ContentController {
     public List<ContentResponse> search(
             @RequestParam String source,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to,
+            @RequestParam String status
     ) {
-        return contentService.getContentsBySourceAndDateRange(source, from, to);
+        return contentService.getContentsBy(source, from, to, status);
     }
 
     @GetMapping("/{id}")

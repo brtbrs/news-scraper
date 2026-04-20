@@ -28,12 +28,13 @@ public class ApiContentClient {
                 : apiBaseUrl + "/ingest/contents";
     }
 
-    public List<ContentItem> getContentsBySourceAndDateRange(String source, Instant from, Instant to) {
+    public List<ContentItem> getContentsBy(String source, Instant from, Instant to, String status) {
         try {
             String url = contentUrl
                     + "/search?source=" + urlEncode(source)
                     + "&from=" + urlEncode(from.toString())
-                    + "&to=" + urlEncode(to.toString());
+                    + "&to=" + urlEncode(to.toString())
+                    + "&status=" + urlEncode(status);
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
                     .GET()

@@ -30,12 +30,12 @@ public class Investor extends BaseScraper implements NewsSource {
     }
 
     @Override
-    public List<String> getNewsList(int scrapLimit, boolean fromSiteMap) throws Exception {
+    public List<String> getNewsList(int scrapLimit, String from) throws Exception {
     	List<String> urls = new ArrayList<>();
 
-    	if (fromSiteMap) {
+    	if (from.equalsIgnoreCase(SITEMAP)) {
     		urls = getNewsListFromSiteMap(scrapLimit);
-    	} else {
+    	} else if (from.equalsIgnoreCase(WEBSITE)) {
     		urls = getNewsListFromWebsite(scrapLimit);
     	}
 
@@ -82,7 +82,7 @@ public class Investor extends BaseScraper implements NewsSource {
 
             //<a href="/market/434116/prasyarat-berat-merger-bumn-karya" class="stretched-link">
             //ada /corporate-action/, /stock/, /crypto/, dll, tapi jika di-click larinya ke /market"
-            if (href.contains("/market/") && !href.equals(MARKET_URL + "/indeks")) {
+            if (href.contains("/market/") && href.length() > (MARKET_URL + "/indeks").length()) {
             	if (!href.startsWith("http")) {
             		href = BASE_URL + href;
             	}
