@@ -1,85 +1,89 @@
 package id.ihaesge.tagger.engine;
 
-import id.ihaesge.tagger.api.ApiContentClient;
-import id.ihaesge.tagger.api.ApiTaggingClient;
-import id.ihaesge.tagger.model.ContentItem;
-import id.ihaesge.tagger.model.TagAliasItem;
+import id.ihaesge.tagger.model.TagCandidate;
+import id.ihaesge.tagger.repository.TaggingRepository;
 
+import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class ContentTaggerEngine {
     private static final String STATUS_TAGGED = "TAGGED";
     private static final String STATUS_UNTAGGED = "UNTAGGED";
     private static final String STATUS_MULTIPLE_STOCKS = "MULTIPLE_STOCKS";
-    private static final Pattern STOCK_TICKER_PATTERN = Pattern.compile("(?i)\\b([a-z]{4})(?:\\.jk)?\\b");
 
-    private final ApiContentClient apiContentClient;
-    private final ApiTaggingClient apiTaggingClient;
+    private final TaggingRepository taggingRepository;
 
-    public ContentTaggerEngine(String apiBaseUrl) {
-        this.apiContentClient = new ApiContentClient(apiBaseUrl);
-        this.apiTaggingClient = new ApiTaggingClient(apiBaseUrl);
+    public ContentTaggerEngine(TaggingRepository taggingRepository) {
+        this.taggingRepository = taggingRepository;
     }
 
     public void run(String source, Instant from, Instant to) {
-        List<TagAliasItem> aliases = apiTaggingClient.getTagAliases();
-        List<ContentItem> contents = apiContentClient.getContentsBySourceAndDateRange(source, from, to);
+        Timestamp fromTs = Timestamp.from(from);
+        Timestamp toTs = Timestamp.from(to);
 
-        System.out.println("Tagging source=" + source + ", from=" + from + ", to=" + to + ", contents=" + contents.size());
-        for (ContentItem content : contents) {
-            processSingleContent(content, aliases);
-        }
-    }
+        List<UUID> pendingContentIds = taggingRepository.findPendingContentIds(source, fromTs, toTs);
+        Map<UUID, List<TagCandidate>> titleCandidatesByContent = toCandidatesByContent(
+                taggingRepository.findCandidatesFromOriginalTitle(source, fromTs, toTs)
+        );
 
-    private void processSingleContent(ContentItem content, List<TagAliasItem> aliases) {
-        String fullText = ((content.originalTitle() == null ? "" : content.originalTitle()) + " "
-                + (content.originalContent() == null ? "" : content.originalContent())).trim();
+        Set<UUID> titleMatchedContentIds = titleCandidatesByContent.keySet();
+        Map<UUID, List<TagCandidate>> contentCandidatesByContent = toCandidatesByContent(
+                taggingRepository.findCandidatesFromOriginalContent(source, fromTs, toTs, titleMatchedContentIds)
+        );
 
-        Set<String> foundTickers = findDistinctTickers(fullText);
-        if (foundTickers.size() > 5) {
-            apiContentClient.updateContentStatus(content.id(), STATUS_MULTIPLE_STOCKS);
-            System.out.println("MULTIPLE_STOCKS contentId=" + content.id() + " tickers=" + foundTickers.size());
-            return;
-        }
+        int taggedCount = 0;
+        int untaggedCount = 0;
+        int multipleStocksCount = 0;
 
-        Set<String> matchedTags = new LinkedHashSet<>();
-        for (TagAliasItem aliasItem : aliases) {
-            if (aliasItem.alias() == null || aliasItem.alias().isBlank() || aliasItem.tag() == null || aliasItem.tag().isBlank()) {
+        for (UUID contentId : pendingContentIds) {
+            List<TagCandidate> effectiveCandidates = titleCandidatesByContent.get(contentId);
+            if (effectiveCandidates == null || effectiveCandidates.isEmpty()) {
+                effectiveCandidates = contentCandidatesByContent.getOrDefault(contentId, List.of());
+            }
+
+            Set<String> distinctTickers = effectiveCandidates.stream()
+                    .map(TagCandidate::ticker)
+                    .filter(ticker -> ticker != null && !ticker.isBlank())
+                    .collect(Collectors.toCollection(LinkedHashSet::new));
+
+            if (distinctTickers.size() > 5) {
+                taggingRepository.updateContentStatus(contentId, STATUS_MULTIPLE_STOCKS);
+                multipleStocksCount++;
                 continue;
             }
 
-            Pattern keywordPattern = Pattern.compile("(?i)" + Pattern.quote(aliasItem.alias()));
-            Matcher matcher = keywordPattern.matcher(fullText);
-            if (matcher.find()) {
-                matchedTags.add(aliasItem.tag());
+            if (distinctTickers.isEmpty()) {
+                taggingRepository.updateContentStatus(contentId, STATUS_UNTAGGED);
+                untaggedCount++;
+                continue;
             }
+
+            String taggedFrom = effectiveCandidates.get(0).taggedFrom();
+            taggingRepository.saveContentTags(contentId, distinctTickers, taggedFrom);
+            taggingRepository.updateContentStatus(contentId, STATUS_TAGGED);
+            taggedCount++;
         }
 
-        if (matchedTags.isEmpty()) {
-            apiContentClient.updateContentStatus(content.id(), STATUS_UNTAGGED);
-            System.out.println("UNTAGGED contentId=" + content.id());
-            return;
-        }
-
-        for (String tag : matchedTags) {
-            apiTaggingClient.createContentTag(content.id(), tag);
-        }
-
-        apiContentClient.updateContentStatus(content.id(), STATUS_TAGGED);
-        System.out.println("TAGGED contentId=" + content.id() + " tags=" + matchedTags);
+        System.out.println("Tagging completed source=" + source
+                + " pending=" + pendingContentIds.size()
+                + " tagged=" + taggedCount
+                + " untagged=" + untaggedCount
+                + " multipleStocks=" + multipleStocksCount);
     }
 
-    private Set<String> findDistinctTickers(String fullText) {
-        Set<String> tickers = new LinkedHashSet<>();
-        Matcher matcher = STOCK_TICKER_PATTERN.matcher(fullText);
-        while (matcher.find()) {
-            tickers.add(matcher.group(1).toUpperCase());
+    private Map<UUID, List<TagCandidate>> toCandidatesByContent(List<TagCandidate> candidates) {
+        Map<UUID, List<TagCandidate>> candidatesByContent = new LinkedHashMap<>();
+        for (TagCandidate candidate : candidates) {
+            candidatesByContent.computeIfAbsent(candidate.contentId(), key -> new ArrayList<>()).add(candidate);
         }
-        return tickers;
+        return candidatesByContent;
     }
 }
