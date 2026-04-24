@@ -96,7 +96,7 @@ public class JdbcTaggingRepository implements TaggingRepository {
               AND st.code = 'PENDING'
               AND LENGTH(trim(ta.alias)) > 1
               AND lower(trim(ta.alias)) NOT IN ('bank')
-            %s
+            {{EXCLUSION_CLAUSE}}
             """;
 
     private static final String INSERT_CONTENT_TAG = """
@@ -149,7 +149,7 @@ public class JdbcTaggingRepository implements TaggingRepository {
     @Override
     public List<TagCandidate> findCandidatesFromOriginalContent(String source, Timestamp from, Timestamp to, Set<UUID> excludedContentIds) {
         String exclusionClause = excludedContentIds.isEmpty() ? "" : " AND c.id NOT IN (" + placeholders(excludedContentIds.size()) + ")";
-        String sql = QUERY_CONTENT_CANDIDATES_TEMPLATE.formatted(exclusionClause);
+        String sql = QUERY_CONTENT_CANDIDATES_TEMPLATE.replace("{{EXCLUSION_CLAUSE}}", exclusionClause);
 
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             int index = bindBaseFilter(stmt, source, from, to);
