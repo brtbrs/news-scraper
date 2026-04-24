@@ -7,8 +7,9 @@
 -- 5) index commonly queried FK columns and timestamps
 -- 6) add NOT BLANK-like checks for critical text columns
 
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
 CREATE EXTENSION IF NOT EXISTS vector;
+
 
 CREATE TABLE attribute (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -133,6 +134,8 @@ CREATE TABLE content_tag (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     content UUID NOT NULL,
     tag VARCHAR(25) NOT NULL,
+	tagged_from VARCHAR(25),
+	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT fk_content_tag_content FOREIGN KEY (content) REFERENCES content (id) ON DELETE CASCADE,
     CONSTRAINT uq_content_tag UNIQUE (content, tag)
 );
@@ -210,6 +213,9 @@ CREATE INDEX idx_content_type ON content (type);
 CREATE INDEX idx_content_source ON content (source);
 CREATE INDEX idx_content_status ON content (status);
 CREATE INDEX idx_content_original_publish_date ON content (original_publish_date);
+CREATE INDEX idx_content_original_title_trgm ON content USING gin (original_title gin_trgm_ops);
+CREATE INDEX idx_content_original_content_trgm ON content USING gin (original_content gin_trgm_ops);
+CREATE INDEX idx_tag_alias_alias_trgm ON tag_alias USING gin (alias gin_trgm_ops);
 CREATE INDEX idx_content_ai_sentiment ON content_ai (sentiment);
 CREATE INDEX idx_content_ai_publish_date ON content_ai (publish_date);
 CREATE INDEX idx_corporate_event_stock ON corporate_event (stock);
@@ -238,20 +244,3 @@ CREATE INDEX idx_pipeline_log_source ON pipeline_log (source);
 -- ALTER TABLE content ALTER COLUMN url TYPE TEXT;
 
 -- SELECT column_name, data_type, character_maximum_length FROM information_schema.columns WHERE table_name = 'content';
-
-CREATE EXTENSION IF NOT EXISTS pg_trgm;
-
-CREATE INDEX IF NOT EXISTS idx_content_original_title_trgm
-    ON content USING gin (original_title gin_trgm_ops);
-
-CREATE INDEX IF NOT EXISTS idx_content_original_content_trgm
-    ON content USING gin (original_content gin_trgm_ops);
-
-CREATE INDEX IF NOT EXISTS idx_tag_alias_alias_trgm
-    ON tag_alias USING gin (alias gin_trgm_ops);
-
-ALTER TABLE content_tag
-    ADD COLUMN IF NOT EXISTS tagged_from VARCHAR(25);
-
-ALTER TABLE content_tag
-    ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW();

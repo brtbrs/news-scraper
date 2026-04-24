@@ -24,7 +24,7 @@ public class Main {
     public static void main(String[] args) {
     	int scrapLimit = 2;
     	try {
-    		Integer.parseInt(readRequiredArg(args, "--limit="));    		
+    		scrapLimit = Integer.parseInt(readRequiredArg(args, "--limit="));    		
     	} catch(NumberFormatException e) {
     		System.out.println("Invalid --limit value. Falling back to default=" + scrapLimit);
     	}
@@ -35,9 +35,11 @@ public class Main {
 //        String apiBaseUrl = System.getenv().getOrDefault("API_BASE_URL", "http://localhost:8080/api");
 //        String fromSiteMap = System.getenv().getOrDefault("FROM_SITE_MAP", "FALSE");
 
-        NewsScraperEngine engine = new NewsScraperEngine();
-        boolean registered = registerSources(engine, source);
-        if (registered) engine.scrape(scrapLimit, from);
+    	if (source != null && from != null) {
+            NewsScraperEngine engine = new NewsScraperEngine();
+            boolean registered = registerSources(engine, source);
+            if (registered) engine.scrape(scrapLimit, from);
+    	}
 
 //        engine.scrapeAll(scrapLimit, Boolean.valueOf(fromSiteMap).booleanValue());
         System.exit(0);

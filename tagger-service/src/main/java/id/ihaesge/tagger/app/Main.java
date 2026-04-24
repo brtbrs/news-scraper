@@ -16,7 +16,7 @@ public class Main {
         LocalDate fromDate = LocalDate.parse(readRequiredArg(args, "--from="));		//yyyy-mm-dd
         LocalDate toDate = LocalDate.parse(readRequiredArg(args, "--to="));			//yyyy-mm-dd
 
-        String jdbcUrl = readConfig("TAGGER_DB_URL", "jdbc:postgresql://localhost:5432/news");
+        String jdbcUrl = readConfig("TAGGER_DB_URL", "jdbc:postgresql://localhost:5432/newsdibi");
         String jdbcUser = readConfig("TAGGER_DB_USER", "postgres");
         String jdbcPassword = readConfig("TAGGER_DB_PASSWORD", "postgres");
 
