@@ -57,21 +57,10 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
             <plugin>
-		      <groupId>org.codehaus.mojo</groupId>
-		      <artifactId>exec-maven-plugin</artifactId>
-		      <version>3.3.0</version>
-		      <configuration>
-		        <mainClass>id.ihaesge.scraper.app.Main</mainClass>
-		      </configuration>
-		    </plugin>
-            <plugin>
-		      <groupId>org.codehaus.mojo</groupId>
-		      <artifactId>exec-maven-plugin</artifactId>
-		      <version>3.3.0</version>
-		      <configuration>
-		        <mainClass>id.ihaesge.tagger.app.Main</mainClass>
-		      </configuration>
-		    </plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.3.0</version>
+            </plugin>
         </plugins>
     </build>
 </project>

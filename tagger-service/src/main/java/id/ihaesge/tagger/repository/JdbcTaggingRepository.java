@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 
 public class JdbcTaggingRepository implements TaggingRepository {
     private static final Set<String> GENERIC_ALIASES = Set.of("bank");
+    private static final String EXCLUSION_CLAUSE_TOKEN = "{{EXCLUSION_CLAUSE}}";
 
     private static final String BASE_FILTER = """
             FROM content c
@@ -148,8 +149,7 @@ public class JdbcTaggingRepository implements TaggingRepository {
 
     @Override
     public List<TagCandidate> findCandidatesFromOriginalContent(String source, Timestamp from, Timestamp to, Set<UUID> excludedContentIds) {
-        String exclusionClause = excludedContentIds.isEmpty() ? "" : " AND c.id NOT IN (" + placeholders(excludedContentIds.size()) + ")";
-        String sql = QUERY_CONTENT_CANDIDATES_TEMPLATE.replace("{{EXCLUSION_CLAUSE}}", exclusionClause);
+        String sql = buildContentCandidatesQuery(excludedContentIds.size());
 
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             int index = bindBaseFilter(stmt, source, from, to);
@@ -160,6 +160,13 @@ public class JdbcTaggingRepository implements TaggingRepository {
         } catch (SQLException e) {
             throw new RuntimeException("Failed to query content tag candidates", e);
         }
+    }
+
+    static String buildContentCandidatesQuery(int excludedContentIdCount) {
+        String exclusionClause = excludedContentIdCount == 0
+                ? ""
+                : " AND c.id NOT IN (" + placeholders(excludedContentIdCount) + ")";
+        return QUERY_CONTENT_CANDIDATES_TEMPLATE.replace(EXCLUSION_CLAUSE_TOKEN, exclusionClause);
     }
 
     @Override
@@ -215,7 +222,7 @@ public class JdbcTaggingRepository implements TaggingRepository {
         return 4;
     }
 
-    private String placeholders(int size) {
+    private static String placeholders(int size) {
         return "?,".repeat(size).replaceAll(",$", "");
     }
 }
