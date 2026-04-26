@@ -1,0 +1,30 @@
+1. to describe a table
+SELECT 
+    column_name, data_type, character_maximum_length, is_nullable, column_default 
+FROM 
+    information_schema.columns 
+WHERE 
+    table_name = 'content_tag';
+
+2. to check defined constraints of a table
+SELECT conname AS constraint_name, pg_catalog.pg_get_constraintdef(c.oid, true) AS constraint_definition
+FROM pg_catalog.pg_constraint c
+JOIN pg_catalog.pg_class rel ON rel.oid = c.conrelid
+JOIN pg_catalog.pg_namespace n ON n.oid = rel.relnamespace
+WHERE n.nspname = 'public' -- Change schema if necessary AND rel.relname = 'content_tag';
+
+3. to check content candidates for tagging, this only affect records on '2026-01-01', for tagged content, remove the '--'
+SELECT c.url, c.original_title, c.original_publish_date, a.code --, ct.tag 
+FROM content c 
+JOIN source s ON c.source = s.id 
+JOin attribute a ON c.status = a.id 
+-- LEFT JOIN content_tag ct ON  c.id = ct.content
+WHERE s.name = 'STOCKWATCH' AND 
+		c.original_publish_date >= '2026-01-01' AND c.original_publish_date <= '2026-01-02' AND 
+		a.type = 'CONTENT_STATUS' AND a.code = 'PENDING'
+
+4. to update content status back to 'PENDING' (used during testing)
+UPDATE content SET status = (SELECT id FROM attribute WHERE type = 'CONTENT_STATUS' AND code = 'PENDING')
+WHERE status != (SELECT id FROM attribute WHERE type = 'CONTENT_STATUS' AND code = 'PENDING')
+
+

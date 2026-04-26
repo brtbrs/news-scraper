@@ -29,46 +29,62 @@ public class ContentTaggerEngine {
         Timestamp fromTs = Timestamp.from(from);
         Timestamp toTs = Timestamp.from(to);
 
-        List<UUID> pendingContentIds = taggingRepository.findPendingContentIds(source, fromTs, toTs);
-        Map<UUID, List<TagCandidate>> contentCandidatesByContent = toCandidatesByContent(
-                taggingRepository.findCandidatesFromOriginalContent(source, fromTs, toTs)
-        );
-
         int taggedCount = 0;
         int untaggedCount = 0;
         int multipleStocksCount = 0;
+        List<UUID> pendingContentIds = new ArrayList<>();
 
-        for (UUID contentId : pendingContentIds) {
-            List<TagCandidate> effectiveCandidates = contentCandidatesByContent.getOrDefault(contentId, List.of());
+        try {
+            pendingContentIds = taggingRepository.findPendingContentIds(source, fromTs, toTs);
+            Map<UUID, List<TagCandidate>> contentCandidatesByContent = toCandidatesByContent(
+                    taggingRepository.findCandidatesFromOriginalContent(source, fromTs, toTs)
+            );
 
-            Set<String> distinctTickers = effectiveCandidates.stream()
-                    .map(TagCandidate::ticker)
-                    .filter(ticker -> ticker != null && !ticker.isBlank())
-                    .collect(Collectors.toCollection(LinkedHashSet::new));
+            for (UUID contentId : pendingContentIds) {
+                List<TagCandidate> effectiveCandidates = contentCandidatesByContent.getOrDefault(contentId, List.of());
 
-            if (distinctTickers.size() > 5) {
-                taggingRepository.updateContentStatus(contentId, STATUS_MULTIPLE_STOCKS);
-                multipleStocksCount++;
-                continue;
+                Set<String> distinctTickers = effectiveCandidates.stream()
+                        .map(TagCandidate::ticker)
+                        .filter(ticker -> ticker != null && !ticker.isBlank())
+                        .collect(Collectors.toCollection(LinkedHashSet::new));
+
+                if (distinctTickers.size() > 5) {
+                    taggingRepository.updateContentStatus(contentId, STATUS_MULTIPLE_STOCKS);
+                    multipleStocksCount++;
+                    continue;
+                }
+
+                if (distinctTickers.isEmpty()) {
+                    taggingRepository.updateContentStatus(contentId, STATUS_UNTAGGED);
+                    untaggedCount++;
+                    continue;
+                }
+
+                String taggedFrom = effectiveCandidates.get(0).taggedFrom();
+                taggingRepository.saveContentTags(contentId, distinctTickers, taggedFrom);
+                taggingRepository.updateContentStatus(contentId, STATUS_TAGGED);
+                taggedCount++;
             }
+        } catch(Exception e) {
+        	e.printStackTrace();
+        } finally {
+            //printout tagging summary
+            System.out.println("\n***** TAGGING SUMMARY *****");
+            System.out.println("TOTAL FOUND : " + pendingContentIds.size());
 
-            if (distinctTickers.isEmpty()) {
-                taggingRepository.updateContentStatus(contentId, STATUS_UNTAGGED);
-                untaggedCount++;
-                continue;
-            }
+    		System.out.println("unTAGGED contents : " + untaggedCount);
+    		System.out.println("multiple tag contents : " + multipleStocksCount);
+//        	for (String unprocessedURL : skipped) {
+//        		System.out.println(unprocessedURL);
+//        	}
 
-            String taggedFrom = effectiveCandidates.get(0).taggedFrom();
-            taggingRepository.saveContentTags(contentId, distinctTickers, taggedFrom);
-            taggingRepository.updateContentStatus(contentId, STATUS_TAGGED);
-            taggedCount++;
+        	System.out.println("TAGGED contents : " + taggedCount);
+//        	for (Content savedContent : saved) {
+//        		System.out.println(savedContent.getUrl());
+//        	}
+
+//            System.out.println("\n===== STOP SCRAPING " + source.getSourceName() + " =====");
         }
-
-        System.out.println("Tagging completed source=" + source
-                + " pending=" + pendingContentIds.size()
-                + " tagged=" + taggedCount
-                + " untagged=" + untaggedCount
-                + " multipleStocks=" + multipleStocksCount);
     }
 
     private Map<UUID, List<TagCandidate>> toCandidatesByContent(List<TagCandidate> candidates) {
