@@ -30,10 +30,13 @@ public class ContentTaggerEngine {
         Timestamp fromTs = Timestamp.from(from);
         Timestamp toTs = Timestamp.from(to);
 
-        int taggedCount = 0;
-        int untaggedCount = 0;
-        int multipleStocksCount = 0;
+//        int taggedCount = 0;
+//        int untaggedCount = 0;
+//        int multipleStocksCount = 0;
         List<Content> pendingContents = new ArrayList<>();
+        List<Content> taggedContent = new ArrayList<>();
+        List<Content> untaggedContent = new ArrayList<>();
+        List<Content> multipleStocksContent = new ArrayList<>();
 
         try {
             pendingContents = taggingRepository.findPendingContentIds(source, fromTs, toTs);
@@ -52,20 +55,20 @@ public class ContentTaggerEngine {
 
                 if (distinctTickers.size() > 5) {
                     taggingRepository.updateContentStatus(contentId, STATUS_MULTIPLE_STOCKS);
-                    multipleStocksCount++;
+                    multipleStocksContent.add(content);
                     continue;
                 }
 
                 if (distinctTickers.isEmpty()) {
                     taggingRepository.updateContentStatus(contentId, STATUS_UNTAGGED);
-                    untaggedCount++;
+                    untaggedContent.add(content);
                     continue;
                 }
 
                 String taggedFrom = effectiveCandidates.get(0).taggedFrom();
                 taggingRepository.saveContentTags(contentId, distinctTickers, taggedFrom);
                 taggingRepository.updateContentStatus(contentId, STATUS_TAGGED);
-                taggedCount++;
+                taggedContent.add(content);
             }
         } catch(Exception e) {
         	e.printStackTrace();
@@ -74,18 +77,22 @@ public class ContentTaggerEngine {
             System.out.println("\n***** TAGGING SUMMARY *****");
             System.out.println("TOTAL FOUND : " + pendingContents.size());
 
-    		System.out.println("unTAGGED contents : " + untaggedCount);
-    		System.out.println("multiple tag contents : " + multipleStocksCount);
-//        	for (String unprocessedURL : skipped) {
-//        		System.out.println(unprocessedURL);
-//        	}
+        	System.out.println("TAGGED contents : " + taggedContent.size());
+        	for (Content content : taggedContent) {
+        		System.out.println(content.url());
+        	}
 
-        	System.out.println("TAGGED contents : " + taggedCount);
-//        	for (Content savedContent : saved) {
-//        		System.out.println(savedContent.getUrl());
-//        	}
+    		System.out.println("unTAGGED contents : " + untaggedContent.size());
+        	for (Content content : untaggedContent) {
+        		System.out.println(content.url());
+        	}
 
-//            System.out.println("\n===== STOP SCRAPING " + source.getSourceName() + " =====");
+    		System.out.println("multiple TAGS contents : " + multipleStocksContent.size());
+        	for (Content content : multipleStocksContent) {
+        		System.out.println(content.url());
+        	}
+
+            System.out.println("\n===== STOP SCRAPING " + source + " =====");
         }
     }
 
