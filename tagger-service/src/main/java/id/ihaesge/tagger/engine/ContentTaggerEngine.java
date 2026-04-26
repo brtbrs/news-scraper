@@ -1,5 +1,6 @@
 package id.ihaesge.tagger.engine;
 
+import id.ihaesge.tagger.model.Content;
 import id.ihaesge.tagger.model.TagCandidate;
 import id.ihaesge.tagger.repository.TaggingRepository;
 
@@ -32,15 +33,16 @@ public class ContentTaggerEngine {
         int taggedCount = 0;
         int untaggedCount = 0;
         int multipleStocksCount = 0;
-        List<UUID> pendingContentIds = new ArrayList<>();
+        List<Content> pendingContents = new ArrayList<>();
 
         try {
-            pendingContentIds = taggingRepository.findPendingContentIds(source, fromTs, toTs);
+            pendingContents = taggingRepository.findPendingContentIds(source, fromTs, toTs);
             Map<UUID, List<TagCandidate>> contentCandidatesByContent = toCandidatesByContent(
                     taggingRepository.findCandidatesFromOriginalContent(source, fromTs, toTs)
             );
 
-            for (UUID contentId : pendingContentIds) {
+            for (Content content : pendingContents) {
+                UUID contentId = content.id();
                 List<TagCandidate> effectiveCandidates = contentCandidatesByContent.getOrDefault(contentId, List.of());
 
                 Set<String> distinctTickers = effectiveCandidates.stream()
@@ -70,7 +72,7 @@ public class ContentTaggerEngine {
         } finally {
             //printout tagging summary
             System.out.println("\n***** TAGGING SUMMARY *****");
-            System.out.println("TOTAL FOUND : " + pendingContentIds.size());
+            System.out.println("TOTAL FOUND : " + pendingContents.size());
 
     		System.out.println("unTAGGED contents : " + untaggedCount);
     		System.out.println("multiple tag contents : " + multipleStocksCount);
