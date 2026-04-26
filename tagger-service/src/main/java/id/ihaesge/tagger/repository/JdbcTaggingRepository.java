@@ -44,39 +44,14 @@ public class JdbcTaggingRepository implements TaggingRepository {
             JOIN source s ON s.id = c.source
             JOIN attribute st ON st.id = c.status
             JOIN tag_alias ta ON (
-                (
-                    LENGTH(ta.alias) > 4
-                    AND ta.alias !~ '\\s+'
-                    AND c.original_content % ta.alias
-                    AND c.original_content ILIKE '%' || ta.alias || '%'
-                )
-                OR
-                (
-                    LENGTH(ta.alias) > 4
-                    AND ta.alias ~ '\\s+'
-                    AND c.original_content ~* ('\\m' || regexp_replace(ta.alias, '\\s+', '\\\\s+', 'g') || '\\M')
-                )
-                OR
-                (
-                    LENGTH(ta.alias) <= 4
-                    AND (
-                        (
-                            ta.alias = upper(ta.alias)
-                            AND c.original_content ~ ('\\m' || regexp_replace(ta.alias, '\\s+', '\\\\s+', 'g') || '\\M')
-                        )
-                        OR
-                        (
-                            ta.alias <> upper(ta.alias)
-                            AND c.original_content ~* ('\\m' || regexp_replace(ta.alias, '\\s+', '\\\\s+', 'g') || '\\M')
-                        )
-                    )
-                )
+                ta.tag ~ '^[A-Z]{4}$'
+                AND c.original_content ~ ('\\m' || ta.tag || '\\M')
             )
             WHERE s.name = ?
               AND c.original_publish_date >= ?
               AND c.original_publish_date <= ?
-              AND st.type = 'CONTENT_STATUS'
-              AND st.code = 'PENDING'
+            AND st.type = 'CONTENT_STATUS'
+            AND st.code = 'PENDING'
               AND LENGTH(trim(ta.alias)) > 1
               AND lower(trim(ta.alias)) NOT IN ('bank')
             """;
