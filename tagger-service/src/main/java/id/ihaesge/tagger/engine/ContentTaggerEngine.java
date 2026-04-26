@@ -30,13 +30,8 @@ public class ContentTaggerEngine {
         Timestamp toTs = Timestamp.from(to);
 
         List<UUID> pendingContentIds = taggingRepository.findPendingContentIds(source, fromTs, toTs);
-        Map<UUID, List<TagCandidate>> titleCandidatesByContent = toCandidatesByContent(
-                taggingRepository.findCandidatesFromOriginalTitle(source, fromTs, toTs)
-        );
-
-        Set<UUID> titleMatchedContentIds = titleCandidatesByContent.keySet();
         Map<UUID, List<TagCandidate>> contentCandidatesByContent = toCandidatesByContent(
-                taggingRepository.findCandidatesFromOriginalContent(source, fromTs, toTs, titleMatchedContentIds)
+                taggingRepository.findCandidatesFromOriginalContent(source, fromTs, toTs)
         );
 
         int taggedCount = 0;
@@ -44,10 +39,7 @@ public class ContentTaggerEngine {
         int multipleStocksCount = 0;
 
         for (UUID contentId : pendingContentIds) {
-            List<TagCandidate> effectiveCandidates = titleCandidatesByContent.get(contentId);
-            if (effectiveCandidates == null || effectiveCandidates.isEmpty()) {
-                effectiveCandidates = contentCandidatesByContent.getOrDefault(contentId, List.of());
-            }
+            List<TagCandidate> effectiveCandidates = contentCandidatesByContent.getOrDefault(contentId, List.of());
 
             Set<String> distinctTickers = effectiveCandidates.stream()
                     .map(TagCandidate::ticker)
