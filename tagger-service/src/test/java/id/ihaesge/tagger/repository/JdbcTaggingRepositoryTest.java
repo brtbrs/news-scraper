@@ -7,17 +7,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class JdbcTaggingRepositoryTest {
 
     @Test
-    void contentCandidatesQueryKeepsTrigramOperator() {
+    void contentCandidatesQueryMatchesOnlyUppercaseFourLetterTags() {
         String sql = JdbcTaggingRepository.QUERY_CONTENT_CANDIDATES;
 
-        assertTrue(sql.contains("c.original_content % ta.alias"));
+        assertTrue(sql.contains("ta.tag ~ '^[A-Z]{4}$'"));
     }
 
     @Test
-    void contentCandidatesQueryUsesCaseSensitiveMatchingForShortUppercaseAliases() {
+    void contentCandidatesQueryUsesCaseSensitiveWholeWordTickerMatching() {
         String sql = JdbcTaggingRepository.QUERY_CONTENT_CANDIDATES;
 
-        assertTrue(sql.contains("ta.alias = upper(ta.alias)"));
-        assertTrue(sql.contains("c.original_content ~ ('\\\\m' || regexp_replace(ta.alias, '\\\\s+', '\\\\\\\\s+', 'g') || '\\\\M')"));
+        assertTrue(sql.contains("c.original_content ~ ('\\\\m' || ta.tag || '\\\\M')"));
     }
 }
