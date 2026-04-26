@@ -1,5 +1,6 @@
 package id.ihaesge.tagger.repository;
 
+import id.ihaesge.tagger.model.Content;
 import id.ihaesge.tagger.model.TagCandidate;
 
 import java.sql.Connection;
@@ -29,7 +30,12 @@ public class JdbcTaggingRepository implements TaggingRepository {
             """;
 
     private static final String QUERY_PENDING_CONTENT = """
-            SELECT c.id
+            SELECT c.id,
+                   c.original_title,
+                   c.original_publish_date,
+                   c.original_content,
+                   c.url,
+                   s.name AS source
             """ + BASE_FILTER;
 
     static final String QUERY_CONTENT_CANDIDATES = """
@@ -97,18 +103,25 @@ public class JdbcTaggingRepository implements TaggingRepository {
     }
 
     @Override
-    public List<UUID> findPendingContentIds(String source, Timestamp from, Timestamp to) {
+    public List<Content> findPendingContentIds(String source, Timestamp from, Timestamp to) {
         try (PreparedStatement stmt = connection.prepareStatement(QUERY_PENDING_CONTENT)) {
             bindBaseFilter(stmt, source, from, to);
-            List<UUID> contentIds = new ArrayList<>();
+            List<Content> contents = new ArrayList<>();
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    contentIds.add(rs.getObject("id", UUID.class));
+                    contents.add(new Content(
+                            rs.getObject("id", UUID.class),
+                            rs.getString("original_title"),
+                            rs.getTimestamp("original_publish_date").toInstant(),
+                            rs.getString("original_content"),
+                            rs.getString("url"),
+                            rs.getString("source")
+                    ));
                 }
             }
-            return contentIds;
+            return contents;
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to load pending content ids", e);
+            throw new RuntimeException("Failed to load pending content", e);
         }
     }
 
