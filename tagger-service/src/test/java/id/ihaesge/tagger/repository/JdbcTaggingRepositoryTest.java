@@ -23,4 +23,12 @@ class JdbcTaggingRepositoryTest {
         assertFalse(sql.contains("AND c.id NOT IN"));
         assertFalse(sql.contains("{{EXCLUSION_CLAUSE}}"));
     }
+
+    @Test
+    void buildContentCandidatesQueryUsesCaseSensitiveMatchingForShortUppercaseAliases() {
+        String sql = JdbcTaggingRepository.buildContentCandidatesQuery(0);
+
+        assertTrue(sql.contains("ta.alias = upper(ta.alias)"));
+        assertTrue(sql.contains("c.original_content ~ ('\\\\m' || regexp_replace(ta.alias, '\\\\s+', '\\\\\\\\s+', 'g') || '\\\\M')"));
+    }
 }
