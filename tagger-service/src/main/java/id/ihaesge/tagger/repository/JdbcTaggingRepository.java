@@ -54,7 +54,17 @@ public class JdbcTaggingRepository implements TaggingRepository {
                 OR
                 (
                     LENGTH(ta.alias) <= 4
-                    AND c.original_title ~* ('\\m' || regexp_replace(ta.alias, '\\s+', '\\\\s+', 'g') || '\\M')
+                    AND (
+                        (
+                            ta.alias = upper(ta.alias)
+                            AND c.original_title ~ ('\\m' || regexp_replace(ta.alias, '\\s+', '\\\\s+', 'g') || '\\M')
+                        )
+                        OR
+                        (
+                            ta.alias <> upper(ta.alias)
+                            AND c.original_title ~* ('\\m' || regexp_replace(ta.alias, '\\s+', '\\\\s+', 'g') || '\\M')
+                        )
+                    )
                 )
             )
             WHERE s.name = ?
@@ -87,7 +97,17 @@ public class JdbcTaggingRepository implements TaggingRepository {
                 OR
                 (
                     LENGTH(ta.alias) <= 4
-                    AND c.original_content ~* ('\\m' || regexp_replace(ta.alias, '\\s+', '\\\\s+', 'g') || '\\M')
+                    AND (
+                        (
+                            ta.alias = upper(ta.alias)
+                            AND c.original_content ~ ('\\m' || regexp_replace(ta.alias, '\\s+', '\\\\s+', 'g') || '\\M')
+                        )
+                        OR
+                        (
+                            ta.alias <> upper(ta.alias)
+                            AND c.original_content ~* ('\\m' || regexp_replace(ta.alias, '\\s+', '\\\\s+', 'g') || '\\M')
+                        )
+                    )
                 )
             )
             WHERE s.name = ?
