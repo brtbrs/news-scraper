@@ -2,31 +2,20 @@ package id.ihaesge.tagger.repository;
 
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class JdbcTaggingRepositoryTest {
 
     @Test
-    void buildContentCandidatesQueryKeepsTrigramOperatorAndAddsExclusionClause() {
-        String sql = JdbcTaggingRepository.buildContentCandidatesQuery(2);
+    void contentCandidatesQueryKeepsTrigramOperator() {
+        String sql = JdbcTaggingRepository.QUERY_CONTENT_CANDIDATES;
 
         assertTrue(sql.contains("c.original_content % ta.alias"));
-        assertTrue(sql.contains("AND c.id NOT IN (?,?)"));
-        assertFalse(sql.contains("{{EXCLUSION_CLAUSE}}"));
     }
 
     @Test
-    void buildContentCandidatesQueryOmitsExclusionClauseWhenNoIds() {
-        String sql = JdbcTaggingRepository.buildContentCandidatesQuery(0);
-
-        assertFalse(sql.contains("AND c.id NOT IN"));
-        assertFalse(sql.contains("{{EXCLUSION_CLAUSE}}"));
-    }
-
-    @Test
-    void buildContentCandidatesQueryUsesCaseSensitiveMatchingForShortUppercaseAliases() {
-        String sql = JdbcTaggingRepository.buildContentCandidatesQuery(0);
+    void contentCandidatesQueryUsesCaseSensitiveMatchingForShortUppercaseAliases() {
+        String sql = JdbcTaggingRepository.QUERY_CONTENT_CANDIDATES;
 
         assertTrue(sql.contains("ta.alias = upper(ta.alias)"));
         assertTrue(sql.contains("c.original_content ~ ('\\\\m' || regexp_replace(ta.alias, '\\\\s+', '\\\\\\\\s+', 'g') || '\\\\M')"));

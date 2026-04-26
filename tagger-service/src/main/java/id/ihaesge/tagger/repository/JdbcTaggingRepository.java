@@ -16,7 +16,6 @@ import java.util.stream.Collectors;
 
 public class JdbcTaggingRepository implements TaggingRepository {
     private static final Set<String> GENERIC_ALIASES = Set.of("bank");
-    private static final String EXCLUSION_CLAUSE_TOKEN = "{{EXCLUSION_CLAUSE}}";
 
     private static final String BASE_FILTER = """
             FROM content c
@@ -33,50 +32,7 @@ public class JdbcTaggingRepository implements TaggingRepository {
             SELECT c.id
             """ + BASE_FILTER;
 
-    private static final String QUERY_TITLE_CANDIDATES = """
-            SELECT DISTINCT c.id AS content_id, ta.tag, ta.alias, 'ORIGINAL_TITLE' AS tagged_from
-            FROM content c
-            JOIN source s ON s.id = c.source
-            JOIN attribute st ON st.id = c.status
-            JOIN tag_alias ta ON (
-                (
-                    LENGTH(ta.alias) > 4
-                    AND ta.alias !~ '\\s+'
-                    AND c.original_title % ta.alias
-                    AND c.original_title ILIKE '%' || ta.alias || '%'
-                )
-                OR
-                (
-                    LENGTH(ta.alias) > 4
-                    AND ta.alias ~ '\\s+'
-                    AND c.original_title ~* ('\\m' || regexp_replace(ta.alias, '\\s+', '\\\\s+', 'g') || '\\M')
-                )
-                OR
-                (
-                    LENGTH(ta.alias) <= 4
-                    AND (
-                        (
-                            ta.alias = upper(ta.alias)
-                            AND c.original_title ~ ('\\m' || regexp_replace(ta.alias, '\\s+', '\\\\s+', 'g') || '\\M')
-                        )
-                        OR
-                        (
-                            ta.alias <> upper(ta.alias)
-                            AND c.original_title ~* ('\\m' || regexp_replace(ta.alias, '\\s+', '\\\\s+', 'g') || '\\M')
-                        )
-                    )
-                )
-            )
-            WHERE s.name = ?
-              AND c.original_publish_date >= ?
-              AND c.original_publish_date <= ?
-              AND st.type = 'CONTENT_STATUS'
-              AND st.code = 'PENDING'
-              AND LENGTH(trim(ta.alias)) > 1
-              AND lower(trim(ta.alias)) NOT IN ('bank')
-            """;
-
-    private static final String QUERY_CONTENT_CANDIDATES_TEMPLATE = """
+    static final String QUERY_CONTENT_CANDIDATES = """
             SELECT DISTINCT c.id AS content_id, ta.tag, ta.alias, 'ORIGINAL_CONTENT' AS tagged_from
             FROM content c
             JOIN source s ON s.id = c.source
@@ -117,7 +73,6 @@ public class JdbcTaggingRepository implements TaggingRepository {
               AND st.code = 'PENDING'
               AND LENGTH(trim(ta.alias)) > 1
               AND lower(trim(ta.alias)) NOT IN ('bank')
-            {{EXCLUSION_CLAUSE}}
             """;
 
     private static final String INSERT_CONTENT_TAG = """
@@ -158,35 +113,13 @@ public class JdbcTaggingRepository implements TaggingRepository {
     }
 
     @Override
-    public List<TagCandidate> findCandidatesFromOriginalTitle(String source, Timestamp from, Timestamp to) {
-        try (PreparedStatement stmt = connection.prepareStatement(QUERY_TITLE_CANDIDATES)) {
+    public List<TagCandidate> findCandidatesFromOriginalContent(String source, Timestamp from, Timestamp to) {
+        try (PreparedStatement stmt = connection.prepareStatement(QUERY_CONTENT_CANDIDATES)) {
             bindBaseFilter(stmt, source, from, to);
-            return mapCandidates(stmt);
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to query title tag candidates", e);
-        }
-    }
-
-    @Override
-    public List<TagCandidate> findCandidatesFromOriginalContent(String source, Timestamp from, Timestamp to, Set<UUID> excludedContentIds) {
-        String sql = buildContentCandidatesQuery(excludedContentIds.size());
-
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            int index = bindBaseFilter(stmt, source, from, to);
-            for (UUID excludedId : excludedContentIds) {
-                stmt.setObject(index++, excludedId);
-            }
             return mapCandidates(stmt);
         } catch (SQLException e) {
             throw new RuntimeException("Failed to query content tag candidates", e);
         }
-    }
-
-    static String buildContentCandidatesQuery(int excludedContentIdCount) {
-        String exclusionClause = excludedContentIdCount == 0
-                ? ""
-                : " AND c.id NOT IN (" + placeholders(excludedContentIdCount) + ")";
-        return QUERY_CONTENT_CANDIDATES_TEMPLATE.replace(EXCLUSION_CLAUSE_TOKEN, exclusionClause);
     }
 
     @Override
@@ -242,7 +175,4 @@ public class JdbcTaggingRepository implements TaggingRepository {
         return 4;
     }
 
-    private static String placeholders(int size) {
-        return "?,".repeat(size).replaceAll(",$", "");
-    }
 }

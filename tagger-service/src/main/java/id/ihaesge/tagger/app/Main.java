@@ -8,9 +8,11 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
 
 public class Main {
+    private static final String DEFAULT_TAGGER_TIMEZONE = "Asia/Jakarta";
+
     public static void main(String[] args) {
         String source = readRequiredArg(args, "--source=");
         LocalDate fromDate = LocalDate.parse(readRequiredArg(args, "--from="));		//yyyy-mm-dd
@@ -19,9 +21,10 @@ public class Main {
         String jdbcUrl = readConfig("TAGGER_DB_URL", "jdbc:postgresql://localhost:5432/newsdibi");
         String jdbcUser = readConfig("TAGGER_DB_USER", "postgres");
         String jdbcPassword = readConfig("TAGGER_DB_PASSWORD", "postgres");
+        ZoneId taggingZone = ZoneId.of(readConfig("TAGGER_TIMEZONE", DEFAULT_TAGGER_TIMEZONE));
 
-        Instant from = fromDate.atStartOfDay().toInstant(ZoneOffset.UTC);
-        Instant to = toDate.plusDays(1).atStartOfDay().minusNanos(1).toInstant(ZoneOffset.UTC);
+        Instant from = fromDate.atStartOfDay(taggingZone).toInstant();
+        Instant to = toDate.plusDays(1).atStartOfDay(taggingZone).minusNanos(1).toInstant();
 
         try (Connection connection = DriverManager.getConnection(jdbcUrl, jdbcUser, jdbcPassword)) {
             connection.setAutoCommit(true);
