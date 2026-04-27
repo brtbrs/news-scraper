@@ -23,8 +23,32 @@ WHERE s.name = 'STOCKWATCH' AND
 		c.original_publish_date >= '2026-01-01' AND c.original_publish_date <= '2026-01-02' AND 
 		a.type = 'CONTENT_STATUS' AND a.code = 'PENDING'
 
-4. to update content status back to 'PENDING' (used during testing)
-UPDATE content SET status = (SELECT id FROM attribute WHERE type = 'CONTENT_STATUS' AND code = 'PENDING')
-WHERE status != (SELECT id FROM attribute WHERE type = 'CONTENT_STATUS' AND code = 'PENDING')
+4. during testing, to delete content_tag
+DELETE FROM content_tag WHERE content IN (
+SELECT c.id 
+FROM content c 
+JOIN source s ON c.source = s.id 
+JOIN attribute a ON c.status = a.id 
+WHERE s.name = 'STOCKWATCH' AND  
+		c.original_publish_date >= '2026-01-03' AND c.original_publish_date <= '2026-01-04'
+)
 
+
+5. and then to update content status back to 'PENDING'
+UPDATE content SET status = (SELECT id FROM attribute WHERE type = 'CONTENT_STATUS' AND code = 'PENDING')
+WHERE id IN (
+SELECT c.id 
+FROM content c 
+JOIN source s ON c.source = s.id 
+JOIN attribute a ON c.status = a.id 
+WHERE s.name = 'STOCKWATCH' AND  
+		c.original_publish_date >= '2026-01-03' AND c.original_publish_date <= '2026-01-04'
+)
+
+6. to list total number of content grouped by sources
+SELECT s.name, count(c.id) 
+FROM content c
+JOIN source s ON c.source = s.id 
+GROUP BY s.name
+ORDER BY s.name
 

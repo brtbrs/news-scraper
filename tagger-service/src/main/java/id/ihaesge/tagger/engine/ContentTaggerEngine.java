@@ -40,6 +40,8 @@ public class ContentTaggerEngine {
 
         try {
             pendingContents = taggingRepository.findPendingContentIds(source, fromTs, toTs);
+            System.out.println("===== START TAGGING " + source + " from : " + from.toString() + " To : " + to.toString() + " with size : " + pendingContents.size() + " =====");
+
             Map<UUID, List<TagCandidate>> contentCandidatesByContent = toCandidatesByContent(
                     taggingRepository.findCandidatesFromOriginalContent(source, fromTs, toTs)
             );
@@ -75,24 +77,23 @@ public class ContentTaggerEngine {
         } finally {
             //printout tagging summary
             System.out.println("\n***** TAGGING SUMMARY *****");
-            System.out.println("TOTAL FOUND : " + pendingContents.size());
 
-        	System.out.println("TAGGED contents : " + taggedContent.size());
+        	System.out.println("TAGGED contents : " + taggedContent.size() + " = " + (taggedContent.size() / pendingContents.size() * 100) + " %");
         	for (Content content : taggedContent) {
         		System.out.println(content.url());
         	}
 
-    		System.out.println("unTAGGED contents : " + untaggedContent.size());
+    		System.out.println("unTAGGED contents : " + untaggedContent.size() + " = " + (untaggedContent.size() / pendingContents.size() * 100) + " %");
         	for (Content content : untaggedContent) {
         		System.out.println(content.url());
         	}
 
-    		System.out.println("multiple TAGS contents : " + multipleStocksContent.size());
+    		System.out.println("multiple TAGS contents : " + multipleStocksContent.size() + " = " + (multipleStocksContent.size() / pendingContents.size() * 100) + " %");
         	for (Content content : multipleStocksContent) {
         		System.out.println(content.url());
         	}
 
-            System.out.println("\n===== STOP SCRAPING " + source + " =====");
+            System.out.println("\n===== STOP TAGGING " + source + " =====");
         }
     }
 
