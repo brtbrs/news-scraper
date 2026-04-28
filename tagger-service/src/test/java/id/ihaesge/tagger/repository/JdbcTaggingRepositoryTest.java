@@ -26,6 +26,8 @@ class JdbcTaggingRepositoryTest {
 
         assertTrue(sql.contains("JOIN stock sk ON sk.ticker = ta.tag"));
         assertTrue(sql.contains("regexp_replace(lower(sk.name), '\\\\mpt\\\\.?\\\\M', ' ', 'g')"));
+        assertTrue(sql.contains("'\\\\mtbk\\\\M\\\\.?'"));
+        assertTrue(sql.contains("'[^[:alnum:]]+'"));
         assertTrue(sql.contains("c.original_content !~ ('[A-Z\\\\s]{0,50}\\\\m' || ta.tag || '\\\\M[A-Z\\\\s]{0,50}')"));
     }
 }
