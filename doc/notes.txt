@@ -52,3 +52,46 @@ JOIN source s ON c.source = s.id
 GROUP BY s.name
 ORDER BY s.name
 
+7. to list pipeline_log
+select s.name, pl.total_found, pl.total_saved, pl.start_at, pl.end_at 
+from pipeline_log pl
+join source s on pl.source = s.id 
+
+8. prompt untuk run pertama:
+a. Combine these related news articles into one coherent article, but be careful because an article may contain the stock ticker but it is not the actual topic of discussion, e.g. 
+https://katadata.co.id/finansial/korporasi/634d99a129775/mematut-prospek-saham-blibli-e-commerce-terintegrasi-grup-djarum 
+this article is not about "ADRO" (even if it is mentioned), but it is about "BELI"
+b. Remove duplicate facts, repeated statements, and overlapping information.
+c. Keep only unique important information.
+d. Preserve factual accuracy and chronology.
+e. Summary the articles above and write one professional Indonesian news style 
+f. Translate it into professional English
+g. Return:
+   - Indonesian version
+   - English version
+
+8. prompt untuk run beriktunya:
+Here is the existing daily summary.
+
+Here are new articles published after the last update.
+
+Please update the summary by:
+
+a. keeping previous facts unchanged
+b. only adding genuinely new information
+c. removing duplication
+d. preserving consistency in wording and structure
+e. keeping chronology accurate
+f. updating English translation accordingly
+
+Do NOT rewrite everything from scratch.
+
+9. tagging error: BAIK, this news is not about BAIK
+select c.url, c.original_publish_date, a.code, ct.tag 
+from content c 
+join source s on c.source = s.id 
+join attribute a on c.status = a.id 
+left join content_tag ct on  c.id = ct.content
+where s.name = 'STOCKWATCH' and c.url = 'https://stockwatch.id/skeptisisme-damai-iran-meningkat-harga-minyak-brent-kembali-tembus-usd-100/'
+
+

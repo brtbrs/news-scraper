@@ -106,9 +106,9 @@ CREATE TABLE content (
     CONSTRAINT ck_content_original_title_not_blank CHECK (length(trim(original_title)) > 0),
     CONSTRAINT ck_content_original_content_not_blank CHECK (length(trim(original_content)) > 0),
     CONSTRAINT ck_content_original_language_not_blank CHECK (length(trim(original_language)) > 0),
-    original_publish_date TIMESTAMPTZ NOT NULL,
     status UUID NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ,
     CONSTRAINT fk_content_type FOREIGN KEY (type) REFERENCES attribute (id) ON DELETE RESTRICT,
     CONSTRAINT fk_content_source FOREIGN KEY (source) REFERENCES source (id) ON DELETE CASCADE,
     CONSTRAINT fk_content_status FOREIGN KEY (status) REFERENCES attribute (id) ON DELETE RESTRICT
