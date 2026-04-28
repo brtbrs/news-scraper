@@ -4961,6 +4961,10 @@ INSERT INTO tag_alias (tag, alias) VALUES ('WAPO', 'WAPO') ON CONFLICT DO NOTHIN
 INSERT INTO tag_alias (tag, alias) VALUES ('WAPO', 'PT Wahana Pronatural') ON CONFLICT DO NOTHING;
 INSERT INTO tag_alias (tag, alias) VALUES ('WAPO', 'Wahana Pronatural') ON CONFLICT DO NOTHING;
 INSERT INTO tag_alias (tag, alias) VALUES ('WAPO', 'Wahana Pronatural Tbk') ON CONFLICT DO NOTHING;
+INSERT INTO tag_alias (tag, alias) VALUES ('WBSA', 'WBSA') ON CONFLICT DO NOTHING;
+INSERT INTO tag_alias (tag, alias) VALUES ('WBSA', 'PT BSA Logistics Indonesia') ON CONFLICT DO NOTHING;
+INSERT INTO tag_alias (tag, alias) VALUES ('WBSA', 'BSA Logistics Indonesia') ON CONFLICT DO NOTHING;
+INSERT INTO tag_alias (tag, alias) VALUES ('WBSA', 'BSA Logistics Indonesia Tbk') ON CONFLICT DO NOTHING;
 INSERT INTO tag_alias (tag, alias) VALUES ('WEGE', 'WEGE') ON CONFLICT DO NOTHING;
 INSERT INTO tag_alias (tag, alias) VALUES ('WEGE', 'PT Wijaya Karya Bangunan Gedung') ON CONFLICT DO NOTHING;
 INSERT INTO tag_alias (tag, alias) VALUES ('WEGE', 'Wijaya Karya Bangunan Gedung') ON CONFLICT DO NOTHING;

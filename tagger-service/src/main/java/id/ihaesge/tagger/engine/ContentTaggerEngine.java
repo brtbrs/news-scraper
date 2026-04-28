@@ -5,6 +5,7 @@ import id.ihaesge.tagger.model.TagCandidate;
 import id.ihaesge.tagger.repository.TaggingRepository;
 
 import java.sql.Timestamp;
+import java.text.DecimalFormat;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -78,22 +79,26 @@ public class ContentTaggerEngine {
             //printout tagging summary
             System.out.println("\n***** TAGGING SUMMARY *****");
 
-        	System.out.println("TAGGED contents : " + taggedContent.size() + " = " + (taggedContent.size() / pendingContents.size() * 100) + " %");
+            DecimalFormat df = new DecimalFormat("0.00");
+            double percentage = (double) taggedContent.size() / pendingContents.size() * 100;
+        	System.out.println("=== TAGGED contents : " + taggedContent.size() + " = " + df.format(percentage) + "%");
         	for (Content content : taggedContent) {
         		System.out.println(content.url());
         	}
 
-    		System.out.println("unTAGGED contents : " + untaggedContent.size() + " = " + (untaggedContent.size() / pendingContents.size() * 100) + " %");
+        	percentage = (double) untaggedContent.size() / pendingContents.size() * 100;
+    		System.out.println("=== unTAGGED contents : " + untaggedContent.size() + " = " + df.format(percentage) + "%");
         	for (Content content : untaggedContent) {
         		System.out.println(content.url());
         	}
 
-    		System.out.println("multiple TAGS contents : " + multipleStocksContent.size() + " = " + (multipleStocksContent.size() / pendingContents.size() * 100) + " %");
+        	percentage = (double) multipleStocksContent.size() / pendingContents.size() * 100;
+    		System.out.println("=== multiple TAGS contents : " + multipleStocksContent.size() + " = " + df.format(percentage) + "%");
         	for (Content content : multipleStocksContent) {
         		System.out.println(content.url());
         	}
 
-            System.out.println("\n===== STOP TAGGING " + source + " =====");
+            System.out.println("\n***** STOP TAGGING " + source + " *****");
         }
     }
 

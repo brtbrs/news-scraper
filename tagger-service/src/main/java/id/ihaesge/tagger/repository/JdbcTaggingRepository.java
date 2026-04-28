@@ -53,8 +53,8 @@ public class JdbcTaggingRepository implements TaggingRepository {
             AND st.type = 'CONTENT_STATUS'
             AND st.code = 'PENDING'
               AND LENGTH(trim(ta.alias)) > 1
-              AND lower(trim(ta.alias)) NOT IN ('bank')
             """;
+//    AND lower(trim(ta.alias)) NOT IN ('bank')
 
     private static final String INSERT_CONTENT_TAG = """
             INSERT INTO content_tag (content, tag, tagged_from)
@@ -142,7 +142,8 @@ public class JdbcTaggingRepository implements TaggingRepository {
         try (ResultSet rs = stmt.executeQuery()) {
             while (rs.next()) {
                 String alias = rs.getString("alias");
-                if (alias == null || alias.isBlank() || GENERIC_ALIASES.contains(alias.trim().toLowerCase())) {
+//                if (alias == null || alias.isBlank() || GENERIC_ALIASES.contains(alias.trim().toLowerCase())) {
+                if (alias == null || alias.isBlank()) {
                     continue;
                 }
                 candidates.add(new TagCandidate(
