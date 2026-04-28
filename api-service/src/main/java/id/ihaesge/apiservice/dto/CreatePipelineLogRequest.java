@@ -6,6 +6,7 @@ import java.time.Instant;
 
 public record CreatePipelineLogRequest(
         @NotBlank String source,
+        String pipeline,
         Instant startAt
 ) {
 }

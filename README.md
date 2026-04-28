@@ -63,6 +63,7 @@ API_BASE_URL=http://localhost:8080/api mvn -pl scraper-service exec:java -Dexec.
 Environment variables:
 
 - `API_BASE_URL` (default: `http://localhost:8080/api`)
+- `TAGGER_TIMEZONE` / scraper publish-date handling uses `Asia/Jakarta` offset format (example: `2026-04-28T10:15:00+07:00`)
 
 ## 4) Run `tagger-service` manually
 
@@ -70,7 +71,7 @@ From repository root:
 
 ```bash
 mvn -pl tagger-service compile
-API_BASE_URL=http://localhost:8080/api mvn -pl tagger-service exec:java -Dexec.mainClass=id.ihaesge.tagger.app.Main -Dexec.args="--source=BISNIS --from=2026-04-01 --to=2026-04-15"
+TAGGER_TIMEZONE=Asia/Jakarta API_BASE_URL=http://localhost:8080/api mvn -pl tagger-service exec:java -Dexec.mainClass=id.ihaesge.tagger.app.Main -Dexec.args="--source=BISNIS --from=2026-04-01 --to=2026-04-15"
 ```
 
 ## 5) Run scraper as cron job
@@ -104,3 +105,23 @@ Content moves through these statuses:
 - `TRANSLATED`: translation completed.
 - `SUMMARIZED`: summarization completed.
 - `LABELED`: final labeling completed.
+
+## Stored function for Summarize + Deduplicate input preparation
+
+Use this SQL function to fetch TAGGED content rows for one stock ticker within a Jakarta-time window.
+
+```sql
+SELECT *
+FROM get_tagged_content_by_ticker_and_window(
+    'BBCA',
+    '2026-04-28T00:00:00+07:00',
+    '2026-04-28T23:59:59+07:00'
+);
+```
+
+This replaces direct ad-hoc joins like:
+
+```sql
+-- old pattern
+-- select c.url, c.original_publish_date, a.code ...
+```

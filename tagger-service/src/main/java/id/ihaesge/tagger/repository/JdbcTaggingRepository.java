@@ -70,6 +70,21 @@ public class JdbcTaggingRepository implements TaggingRepository {
               AND a.type = 'CONTENT_STATUS'
               AND a.code = ?
             """;
+    private static final String INSERT_PIPELINE_LOG = """
+            INSERT INTO pipeline_log (source, pipeline, start_at)
+            SELECT s.id, ?, ?
+            FROM source s
+            WHERE s.name = ?
+            RETURNING id
+            """;
+    private static final String UPDATE_PIPELINE_LOG = """
+            UPDATE pipeline_log
+            SET total_tagged = ?,
+                total_untagged = ?,
+                total_multiple = ?,
+                end_at = ?
+            WHERE id = ?
+            """;
 
     private final Connection connection;
 
@@ -134,6 +149,37 @@ public class JdbcTaggingRepository implements TaggingRepository {
             stmt.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException("Failed to update content status", e);
+        }
+    }
+
+    @Override
+    public UUID createPipelineLog(String source, String pipeline, Timestamp startAt) {
+        try (PreparedStatement stmt = connection.prepareStatement(INSERT_PIPELINE_LOG)) {
+            stmt.setString(1, pipeline);
+            stmt.setTimestamp(2, startAt);
+            stmt.setString(3, source);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getObject("id", UUID.class);
+                }
+            }
+            throw new IllegalStateException("Source not found for pipeline log: " + source);
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to create pipeline log", e);
+        }
+    }
+
+    @Override
+    public void updatePipelineLog(UUID pipelineLogId, int totalTagged, int totalUntagged, int totalMultiple, Timestamp endAt) {
+        try (PreparedStatement stmt = connection.prepareStatement(UPDATE_PIPELINE_LOG)) {
+            stmt.setInt(1, totalTagged);
+            stmt.setInt(2, totalUntagged);
+            stmt.setInt(3, totalMultiple);
+            stmt.setTimestamp(4, endAt);
+            stmt.setObject(5, pipelineLogId);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to update pipeline log", e);
         }
     }
 

@@ -7,6 +7,8 @@ import id.ihaesge.tagger.repository.TaggingRepository;
 import java.sql.Timestamp;
 import java.text.DecimalFormat;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -20,6 +22,8 @@ public class ContentTaggerEngine {
     private static final String STATUS_TAGGED = "TAGGED";
     private static final String STATUS_UNTAGGED = "UNTAGGED";
     private static final String STATUS_MULTIPLE_STOCKS = "MULTIPLE_STOCKS";
+    private static final String PIPELINE_TAGGER = "TAGGER";
+    private static final ZoneId ASIA_JAKARTA = ZoneId.of("Asia/Jakarta");
 
     private final TaggingRepository taggingRepository;
 
@@ -38,8 +42,10 @@ public class ContentTaggerEngine {
         List<Content> taggedContent = new ArrayList<>();
         List<Content> untaggedContent = new ArrayList<>();
         List<Content> multipleStocksContent = new ArrayList<>();
+        UUID pipelineLogId = null;
 
         try {
+            pipelineLogId = taggingRepository.createPipelineLog(source, PIPELINE_TAGGER, Timestamp.from(nowJakarta()));
             pendingContents = taggingRepository.findPendingContentIds(source, fromTs, toTs);
             System.out.println("===== START TAGGING " + source + " from : " + from.toString() + " To : " + to.toString() + " with size : " + pendingContents.size() + " =====");
 
@@ -76,23 +82,34 @@ public class ContentTaggerEngine {
         } catch(Exception e) {
         	e.printStackTrace();
         } finally {
+            if (pipelineLogId != null) {
+                taggingRepository.updatePipelineLog(
+                        pipelineLogId,
+                        taggedContent.size(),
+                        untaggedContent.size(),
+                        multipleStocksContent.size(),
+                        Timestamp.from(nowJakarta())
+                );
+            }
+
             //printout tagging summary
             System.out.println("\n***** TAGGING SUMMARY *****");
 
             DecimalFormat df = new DecimalFormat("0.00");
-            double percentage = (double) taggedContent.size() / pendingContents.size() * 100;
+            int totalPending = pendingContents.size();
+            double percentage = totalPending == 0 ? 0 : (double) taggedContent.size() / totalPending * 100;
         	System.out.println("=== TAGGED contents : " + taggedContent.size() + " = " + df.format(percentage) + "%");
         	for (Content content : taggedContent) {
         		System.out.println(content.url());
         	}
 
-        	percentage = (double) untaggedContent.size() / pendingContents.size() * 100;
+        	percentage = totalPending == 0 ? 0 : (double) untaggedContent.size() / totalPending * 100;
     		System.out.println("=== unTAGGED contents : " + untaggedContent.size() + " = " + df.format(percentage) + "%");
         	for (Content content : untaggedContent) {
         		System.out.println(content.url());
         	}
 
-        	percentage = (double) multipleStocksContent.size() / pendingContents.size() * 100;
+        	percentage = totalPending == 0 ? 0 : (double) multipleStocksContent.size() / totalPending * 100;
     		System.out.println("=== multiple TAGS contents : " + multipleStocksContent.size() + " = " + df.format(percentage) + "%");
         	for (Content content : multipleStocksContent) {
         		System.out.println(content.url());
@@ -108,5 +125,9 @@ public class ContentTaggerEngine {
             candidatesByContent.computeIfAbsent(candidate.contentId(), key -> new ArrayList<>()).add(candidate);
         }
         return candidatesByContent;
+    }
+
+    private Instant nowJakarta() {
+        return ZonedDateTime.now(ASIA_JAKARTA).toInstant();
     }
 }

@@ -8,9 +8,12 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 
 public class ApiContentClient {
+    private static final ZoneId ASIA_JAKARTA = ZoneId.of("Asia/Jakarta");
+    private static final DateTimeFormatter ISO_OFFSET = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
     private final String createContentUrl;
@@ -31,7 +34,7 @@ public class ApiContentClient {
         				content.getOriginalContent(),
         				content.getUrl(),
         				"id",
-        				content.getOriginalPublishDate() == null ? null : content.getOriginalPublishDate().atOffset(ZoneOffset.UTC).toInstant().toString()
+        				content.getOriginalPublishDate() == null ? null : content.getOriginalPublishDate().atZone(ASIA_JAKARTA).format(ISO_OFFSET)
         );
 
         try {
