@@ -47,12 +47,45 @@ public class JdbcTaggingRepository implements TaggingRepository {
                 ta.tag ~ '^[A-Z]{4}$'
                 AND c.original_content ~ ('\\m' || ta.tag || '\\M')
             )
+            JOIN stock sk ON sk.ticker = ta.tag
             WHERE s.name = ?
               AND c.original_publish_date >= ?
               AND c.original_publish_date <= ?
-            AND st.type = 'CONTENT_STATUS'
-            AND st.code = 'PENDING'
+              AND st.type = 'CONTENT_STATUS'
+              AND st.code = 'PENDING'
               AND LENGTH(trim(ta.alias)) > 1
+              AND (
+                    (
+                        POSITION(
+                            trim(regexp_replace(
+                                regexp_replace(
+                                    regexp_replace(
+                                        regexp_replace(lower(sk.name), '\\mpt\\.?\\M', ' ', 'g'),
+                                        '\\(\\s*persero\\s*\\)',
+                                        ' ',
+                                        'g'
+                                    ),
+                                    '\\mtbk\\.?\\M',
+                                    ' ',
+                                    'g'
+                                ),
+                                '\\s+',
+                                ' ',
+                                'g'
+                            ))
+                            IN
+                            trim(regexp_replace(
+                                regexp_replace(lower(c.original_content), '[^[:alnum:]]+', ' ', 'g'),
+                                '\\s+',
+                                ' ',
+                                'g'
+                            ))
+                        ) > 0
+                    )
+                    OR (
+                        c.original_content !~ ('[A-Z\\s]{0,50}\\m' || ta.tag || '\\M[A-Z\\s]{0,50}')
+                    )
+              )
             """;
 //    AND lower(trim(ta.alias)) NOT IN ('bank')
 
