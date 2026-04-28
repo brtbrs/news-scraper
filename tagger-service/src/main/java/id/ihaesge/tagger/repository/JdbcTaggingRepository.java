@@ -79,8 +79,18 @@ public class JdbcTaggingRepository implements TaggingRepository {
                             ))
                             IN
                             trim(regexp_replace(
-                                regexp_replace(lower(c.original_content), '[^[:alnum:]]+', ' ', 'g'),
-                                '\\s+',
+                                regexp_replace(
+                                    regexp_replace(
+                                        regexp_replace(lower(c.original_content), '\\mpt\\.?\\M', ' ', 'g'),
+                                        '\\(\\s*persero\\s*\\)',
+                                        ' ',
+                                        'g'
+                                    ),
+                                    '\\mtbk\\M\\.?',
+                                    ' ',
+                                    'g'
+                                ),
+                                '[^[:alnum:]]+',
                                 ' ',
                                 'g'
                             ))
