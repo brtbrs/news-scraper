@@ -221,6 +221,7 @@ CREATE INDEX idx_content_status ON content (status);
 CREATE INDEX idx_content_original_publish_date ON content (original_publish_date);
 CREATE INDEX idx_content_original_title_trgm ON content USING gin (original_title gin_trgm_ops);
 CREATE INDEX idx_content_original_content_trgm ON content USING gin (original_content gin_trgm_ops);
+CREATE INDEX idx_content_updated_at ON content (updated_at);
 CREATE INDEX idx_tag_alias_alias_trgm ON tag_alias USING gin (alias gin_trgm_ops);
 CREATE INDEX idx_content_ai_sentiment ON content_ai (sentiment);
 CREATE INDEX idx_content_ai_publish_date ON content_ai (publish_date);
@@ -233,9 +234,7 @@ CREATE INDEX idx_activity_log_user ON activity_log (user_id);
 CREATE INDEX idx_activity_log_content ON activity_log (content);
 CREATE INDEX idx_activity_log_audio ON activity_log (audio);
 CREATE INDEX idx_pipeline_log_source ON pipeline_log (source);
-
 CREATE INDEX idx_pipeline_log_pipeline ON pipeline_log (pipeline);
-CREATE INDEX idx_content_updated_at ON content (updated_at);
 
 CREATE OR REPLACE FUNCTION get_tagged_content_by_ticker_and_window(
     p_tag VARCHAR(25),
@@ -247,7 +246,6 @@ RETURNS TABLE (
     stock_ticker VARCHAR(25),
     url TEXT,
     original_publish_date TIMESTAMPTZ,
-    publish_date_jakarta DATE,
     source_name VARCHAR(150),
     original_title VARCHAR(512),
     original_content TEXT
@@ -258,7 +256,6 @@ AS $$
            ct.tag AS stock_ticker,
            c.url,
            c.original_publish_date,
-           (c.original_publish_date AT TIME ZONE 'Asia/Jakarta')::DATE AS publish_date_jakarta,
            s.name AS source_name,
            c.original_title,
            c.original_content
