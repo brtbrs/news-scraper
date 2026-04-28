@@ -61,6 +61,7 @@ CREATE TABLE stock (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     ticker VARCHAR(20) NOT NULL UNIQUE,
     name VARCHAR(255) NOT NULL UNIQUE,
+    pure_name VARCHAR(255) UNIQUE,
     sub_industry VARCHAR(20) NOT NULL,
     industry VARCHAR(20) NOT NULL,
     sector VARCHAR(20) NOT NULL,
