@@ -11,11 +11,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Locale;
 import java.util.UUID;
 
 @Service
 public class PipelineLogService {
+    private static final ZoneId ASIA_JAKARTA = ZoneId.of("Asia/Jakarta");
     private final PipelineLogRepository pipelineLogRepository;
     private final SourceRepository sourceRepository;
 
@@ -28,7 +31,8 @@ public class PipelineLogService {
     public PipelineLogResponse createLog(CreatePipelineLogRequest request) {
         PipelineLogEntity entity = new PipelineLogEntity();
         entity.setSource(resolveSource(request.source()));
-        entity.setStartAt(request.startAt() != null ? request.startAt() : Instant.now());
+        entity.setPipeline(normalizePipeline(request.pipeline()));
+        entity.setStartAt(request.startAt() != null ? request.startAt() : nowJakarta());
 
         PipelineLogEntity saved = pipelineLogRepository.save(entity);
         return toResponse(saved);
@@ -41,7 +45,10 @@ public class PipelineLogService {
 
         entity.setTotalFound(request.totalFound());
         entity.setTotalSaved(request.totalSaved());
-        entity.setEndAt(request.endAt() != null ? request.endAt() : Instant.now());
+        entity.setTotalTagged(request.totalTagged());
+        entity.setTotalUntagged(request.totalUntagged());
+        entity.setTotalMultiple(request.totalMultiple());
+        entity.setEndAt(request.endAt() != null ? request.endAt() : nowJakarta());
 
         PipelineLogEntity saved = pipelineLogRepository.save(entity);
         return toResponse(saved);
@@ -64,12 +71,31 @@ public class PipelineLogService {
                 .replaceAll("(^-|-$)", "");
     }
 
+    private String normalizePipeline(String pipeline) {
+        if (pipeline == null || pipeline.isBlank()) {
+            return null;
+        }
+        String normalized = pipeline.trim().toUpperCase(Locale.ROOT);
+        if (!normalized.equals("SCRAPER") && !normalized.equals("TAGGER")) {
+            throw new IllegalArgumentException("Unsupported pipeline: " + pipeline);
+        }
+        return normalized;
+    }
+
+    private Instant nowJakarta() {
+        return ZonedDateTime.now(ASIA_JAKARTA).toInstant();
+    }
+
     private PipelineLogResponse toResponse(PipelineLogEntity entity) {
         return new PipelineLogResponse(
                 entity.getId(),
                 entity.getSource().getName(),
+                entity.getPipeline(),
                 entity.getTotalFound(),
                 entity.getTotalSaved(),
+                entity.getTotalTagged(),
+                entity.getTotalUntagged(),
+                entity.getTotalMultiple(),
                 entity.getStartAt(),
                 entity.getEndAt()
         );

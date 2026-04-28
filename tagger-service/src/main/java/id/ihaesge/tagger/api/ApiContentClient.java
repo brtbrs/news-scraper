@@ -12,10 +12,14 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 
 public class ApiContentClient {
+    private static final ZoneId ASIA_JAKARTA = ZoneId.of("Asia/Jakarta");
+    private static final DateTimeFormatter ISO_OFFSET = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
     private final String contentUrl;
@@ -32,8 +36,8 @@ public class ApiContentClient {
         try {
             String url = contentUrl
                     + "/search?source=" + urlEncode(source)
-                    + "&from=" + urlEncode(from.toString())
-                    + "&to=" + urlEncode(to.toString())
+                    + "&from=" + urlEncode(from.atZone(ASIA_JAKARTA).format(ISO_OFFSET))
+                    + "&to=" + urlEncode(to.atZone(ASIA_JAKARTA).format(ISO_OFFSET))
                     + "&status=" + urlEncode(status);
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))

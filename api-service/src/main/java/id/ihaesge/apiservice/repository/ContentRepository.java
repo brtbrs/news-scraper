@@ -20,13 +20,13 @@ public interface ContentRepository extends JpaRepository<ContentEntity, UUID> {
             WHERE lower(c.source.name) = lower(:source)
               and c.originalPublishDate >= :from
               and c.originalPublishDate <= :to
-              and c.status = :status 
+              and c.status.code = :status
             ORDER BY c.originalPublishDate DESC
             """)
     List<ContentEntity> findBy(
             @Param("source") String source,
             @Param("from") Instant from,
             @Param("to") Instant to,
-            @Param("source") String status
+            @Param("status") String status
     );
 }

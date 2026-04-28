@@ -11,8 +11,7 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 
 public class Main {
-//    private static final String DEFAULT_TAGGER_TIMEZONE = "Asia/Jakarta";
-    private static final String DEFAULT_TAGGER_TIMEZONE = "UTC";
+    private static final String DEFAULT_TAGGER_TIMEZONE = "Asia/Jakarta";
 
     public static void main(String[] args) {
         String source = readRequiredArg(args, "--source=");

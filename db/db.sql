@@ -108,7 +108,7 @@ CREATE TABLE content (
     CONSTRAINT ck_content_original_language_not_blank CHECK (length(trim(original_language)) > 0),
     status UUID NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT fk_content_type FOREIGN KEY (type) REFERENCES attribute (id) ON DELETE RESTRICT,
     CONSTRAINT fk_content_source FOREIGN KEY (source) REFERENCES source (id) ON DELETE CASCADE,
     CONSTRAINT fk_content_status FOREIGN KEY (status) REFERENCES attribute (id) ON DELETE RESTRICT
@@ -199,8 +199,12 @@ CREATE TABLE activity_log (
 CREATE TABLE pipeline_log (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     source UUID NOT NULL,
+    pipeline VARCHAR(20),
     total_found INTEGER,
     total_saved INTEGER,
+    total_tagged INTEGER,
+    total_untagged INTEGER,
+    total_multiple INTEGER,
     start_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     end_at TIMESTAMPTZ,
     CONSTRAINT fk_pipeline_log_source FOREIGN KEY (source) REFERENCES source (id) ON DELETE CASCADE
@@ -227,6 +231,46 @@ CREATE INDEX idx_activity_log_user ON activity_log (user_id);
 CREATE INDEX idx_activity_log_content ON activity_log (content);
 CREATE INDEX idx_activity_log_audio ON activity_log (audio);
 CREATE INDEX idx_pipeline_log_source ON pipeline_log (source);
+
+CREATE INDEX idx_pipeline_log_pipeline ON pipeline_log (pipeline);
+CREATE INDEX idx_content_updated_at ON content (updated_at);
+
+CREATE OR REPLACE FUNCTION get_tagged_content_by_ticker_and_window(
+    p_tag VARCHAR(25),
+    p_start TIMESTAMPTZ,
+    p_end TIMESTAMPTZ
+)
+RETURNS TABLE (
+    content_id UUID,
+    stock_ticker VARCHAR(25),
+    url TEXT,
+    original_publish_date TIMESTAMPTZ,
+    publish_date_jakarta DATE,
+    source_name VARCHAR(150),
+    original_title VARCHAR(512),
+    original_content TEXT
+)
+LANGUAGE SQL
+AS $$
+    SELECT c.id,
+           ct.tag AS stock_ticker,
+           c.url,
+           c.original_publish_date,
+           (c.original_publish_date AT TIME ZONE 'Asia/Jakarta')::DATE AS publish_date_jakarta,
+           s.name AS source_name,
+           c.original_title,
+           c.original_content
+    FROM content c
+    JOIN content_tag ct ON c.id = ct.content
+    JOIN attribute a ON c.status = a.id
+    JOIN source s ON c.source = s.id
+    WHERE c.original_publish_date >= p_start
+      AND c.original_publish_date <= p_end
+      AND ct.tag = p_tag
+      AND a.type = 'CONTENT_STATUS'
+      AND a.code = 'TAGGED'
+    ORDER BY c.original_publish_date ASC, c.id ASC;
+$$;
 
 -- ALTER TABLE content DROP COLUMN title_id;
 -- ALTER TABLE content DROP COLUMN title_en;

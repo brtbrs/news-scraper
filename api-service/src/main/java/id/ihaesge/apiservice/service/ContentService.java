@@ -12,12 +12,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
 @Service
 public class ContentService {
+    private static final ZoneId ASIA_JAKARTA = ZoneId.of("Asia/Jakarta");
     private static final String CONTENT_TYPE = "CONTENT_TYPE";
     private static final String CONTENT_TYPE_NEWS = "NEWS";
     private static final String CONTENT_STATUS = "CONTENT_STATUS";
@@ -52,8 +55,9 @@ public class ContentService {
         entity.setOriginalContent(request.originalContent());
         entity.setUrl(request.url());
         entity.setOriginalLanguage(request.originalLanguage() != null ? request.originalLanguage() : "id");
-        entity.setOriginalPublishDate(request.originalPublishDate() != null ? request.originalPublishDate() : Instant.now());
+        entity.setOriginalPublishDate(request.originalPublishDate() != null ? request.originalPublishDate() : nowJakarta());
         entity.setStatus(status);
+        entity.setUpdatedAt(nowJakarta());
 
         ContentEntity saved = contentRepository.save(entity);
 
@@ -83,6 +87,7 @@ public class ContentService {
 
         AttributeEntity status = resolveAttribute(CONTENT_STATUS, statusCode);
         content.setStatus(status);
+        content.setUpdatedAt(nowJakarta());
         contentRepository.save(content);
     }
 
@@ -126,5 +131,9 @@ public class ContentService {
                 entity.getStatus().getCode(),
                 entity.getOriginalPublishDate()
         );
+    }
+
+    private Instant nowJakarta() {
+        return ZonedDateTime.now(ASIA_JAKARTA).toInstant();
     }
 }

@@ -8,12 +8,16 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 public class ApiPipelineLogClient {
+    private static final ZoneId ASIA_JAKARTA = ZoneId.of("Asia/Jakarta");
+    private static final DateTimeFormatter ISO_OFFSET = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
     private final String pipelineLogsUrl;
@@ -29,7 +33,8 @@ public class ApiPipelineLogClient {
     public UUID createStartLog(String sourceName) {
         Map<String, Object> payloadMap = new HashMap<>();
         payloadMap.put("source", sourceName);
-        payloadMap.put("startAt", Instant.now().toString());
+        payloadMap.put("pipeline", "SCRAPER");
+        payloadMap.put("startAt", nowJakartaAsString());
 
         try {
             HttpResponse<String> response = sendRequest("POST", pipelineLogsUrl, payloadMap);
@@ -57,7 +62,7 @@ public class ApiPipelineLogClient {
         Map<String, Object> payloadMap = new HashMap<>();
         payloadMap.put("totalFound", totalFound);
         payloadMap.put("totalSaved", totalSaved);
-        payloadMap.put("endAt", Instant.now().toString());
+        payloadMap.put("endAt", nowJakartaAsString());
 
         String endpoint = pipelineLogsUrl + "/" + pipelineLogId;
 
@@ -86,5 +91,9 @@ public class ApiPipelineLogClient {
         };
 
         return httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+    }
+
+    private String nowJakartaAsString() {
+        return ZonedDateTime.now(ASIA_JAKARTA).format(ISO_OFFSET);
     }
 }
