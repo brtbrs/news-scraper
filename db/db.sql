@@ -134,11 +134,8 @@ CREATE TABLE content_tag (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     content UUID NOT NULL,
     tag VARCHAR(25) NOT NULL,
-    tagged_from VARCHAR(25) NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT fk_content_tag_content FOREIGN KEY (content) REFERENCES content (id) ON DELETE CASCADE,
-    CONSTRAINT fk_content_tag_tag FOREIGN KEY (tag) REFERENCES stock (ticker) ON DELETE RESTRICT,
-    CONSTRAINT ck_content_tag_tagged_from_not_blank CHECK (length(trim(tagged_from)) > 0),
     CONSTRAINT uq_content_tag UNIQUE (content, tag)
 );
 
