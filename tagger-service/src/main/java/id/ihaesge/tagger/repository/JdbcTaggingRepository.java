@@ -60,37 +60,43 @@ public class JdbcTaggingRepository implements TaggingRepository {
                             trim(regexp_replace(
                                 regexp_replace(
                                     regexp_replace(
-                                        regexp_replace(lower(sk.name), '\\mpt\\.?\\M', ' ', 'g'),
-                                        '\\(\\s*persero\\s*\\)',
+                                        regexp_replace(
+                                            regexp_replace(lower(sk.name), '\\mpt\\.?\\M', ' ', 'g'),
+                                            '\\(\\s*persero\\s*\\)',
+                                            ' ',
+                                            'g'
+                                        ),
+                                        '\\mtbk\\M\\.?',
                                         ' ',
                                         'g'
                                     ),
-                                    '\\mtbk\\M\\.?',
-                                    ' ',
-                                    'g'
-                                ),
-                                '[^[:alnum:]]+',
+                                    '[^[:alnum:]]+',
                                     ' ',
                                     'g'
                                 ),
                                 '\\s+',
-                                ' ',
-                                'g'
+                                    ' ',
+                                    'g'
                             ))
                             IN
                             trim(regexp_replace(
                                 regexp_replace(
                                     regexp_replace(
-                                        regexp_replace(lower(c.original_content), '\\mpt\\.?\\M', ' ', 'g'),
-                                        '\\(\\s*persero\\s*\\)',
+                                        regexp_replace(
+                                            regexp_replace(lower(c.original_content), '\\mpt\\.?\\M', ' ', 'g'),
+                                            '\\(\\s*persero\\s*\\)',
+                                            ' ',
+                                            'g'
+                                        ),
+                                        '\\mtbk\\M\\.?',
                                         ' ',
                                         'g'
                                     ),
-                                    '\\mtbk\\M\\.?',
+                                    '[^[:alnum:]]+',
                                     ' ',
                                     'g'
                                 ),
-                                '[^[:alnum:]]+',
+                                '\\s+',
                                 ' ',
                                 'g'
                             ))
