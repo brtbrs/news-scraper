@@ -74,8 +74,7 @@ public class ContentTaggerEngine {
                     continue;
                 }
 
-                String taggedFrom = effectiveCandidates.get(0).taggedFrom();
-                taggingRepository.saveContentTags(contentId, distinctTickers, taggedFrom);
+                taggingRepository.saveContentTags(contentId, distinctTickers);
                 taggingRepository.updateContentStatus(contentId, STATUS_TAGGED);
                 taggedContent.add(content);
             }

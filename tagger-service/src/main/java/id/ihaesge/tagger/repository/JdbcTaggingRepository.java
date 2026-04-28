@@ -39,7 +39,7 @@ public class JdbcTaggingRepository implements TaggingRepository {
             """ + BASE_FILTER;
 
     static final String QUERY_CONTENT_CANDIDATES = """
-            SELECT DISTINCT c.id AS content_id, ta.tag, ta.alias, 'ORIGINAL_CONTENT' AS tagged_from
+            SELECT DISTINCT c.id AS content_id, ta.tag, ta.alias
             FROM content c
             JOIN source s ON s.id = c.source
             JOIN attribute st ON st.id = c.status
@@ -90,8 +90,8 @@ public class JdbcTaggingRepository implements TaggingRepository {
 //    AND lower(trim(ta.alias)) NOT IN ('bank')
 
     private static final String INSERT_CONTENT_TAG = """
-            INSERT INTO content_tag (content, tag, tagged_from)
-            VALUES (?, ?, ?)
+            INSERT INTO content_tag (content, tag)
+            VALUES (?, ?)
             ON CONFLICT (content, tag) DO NOTHING
             """;
 
@@ -159,13 +159,12 @@ public class JdbcTaggingRepository implements TaggingRepository {
     }
 
     @Override
-    public void saveContentTags(UUID contentId, Set<String> tickers, String taggedFrom) {
+    public void saveContentTags(UUID contentId, Set<String> tickers) {
         Set<String> uniqueTickers = tickers.stream().filter(t -> t != null && !t.isBlank()).collect(Collectors.toCollection(HashSet::new));
         try (PreparedStatement stmt = connection.prepareStatement(INSERT_CONTENT_TAG)) {
             for (String ticker : uniqueTickers) {
                 stmt.setObject(1, contentId);
                 stmt.setString(2, ticker);
-                stmt.setString(3, taggedFrom);
                 stmt.addBatch();
             }
             stmt.executeBatch();
@@ -228,8 +227,7 @@ public class JdbcTaggingRepository implements TaggingRepository {
                 candidates.add(new TagCandidate(
                         rs.getObject("content_id", UUID.class),
                         rs.getString("tag"),
-                        alias,
-                        rs.getString("tagged_from")
+                        alias
                 ));
             }
         }
