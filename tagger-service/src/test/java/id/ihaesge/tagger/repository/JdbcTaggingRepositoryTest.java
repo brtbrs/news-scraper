@@ -19,4 +19,13 @@ class JdbcTaggingRepositoryTest {
 
         assertTrue(sql.contains("c.original_content ~ ('\\\\m' || ta.tag || '\\\\M')"));
     }
+
+    @Test
+    void contentCandidatesQueryRequiresCompanyNameOrMixedCaseContext() {
+        String sql = JdbcTaggingRepository.QUERY_CONTENT_CANDIDATES;
+
+        assertTrue(sql.contains("JOIN stock sk ON sk.ticker = ta.tag"));
+        assertTrue(sql.contains("regexp_replace(lower(sk.name), '\\\\mpt\\\\.?\\\\M', ' ', 'g')"));
+        assertTrue(sql.contains("c.original_content !~ ('[A-Z\\\\s]{0,50}\\\\m' || ta.tag || '\\\\M[A-Z\\\\s]{0,50}')"));
+    }
 }
