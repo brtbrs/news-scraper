@@ -65,7 +65,11 @@ public class JdbcTaggingRepository implements TaggingRepository {
                                         ' ',
                                         'g'
                                     ),
-                                    '\\mtbk\\.?\\M',
+                                    '\\mtbk\\M\\.?',
+                                    ' ',
+                                    'g'
+                                ),
+                                '[^[:alnum:]]+',
                                     ' ',
                                     'g'
                                 ),
