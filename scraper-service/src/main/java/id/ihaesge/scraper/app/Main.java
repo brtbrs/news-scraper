@@ -52,7 +52,7 @@ public class Main {
 	    	case "BISNIS":	    		
 	    		engine.registerSource(new Bisnis());
 	    		break;
-	    	case "CNBC":
+	    	case "CNBCINDONESIA":
 	    		engine.registerSource(new CNBC());
 	    		break;
 	    	case "EMITENNEWS":
