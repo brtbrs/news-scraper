@@ -56,51 +56,7 @@ public class JdbcTaggingRepository implements TaggingRepository {
               AND LENGTH(trim(ta.alias)) > 1
               AND (
                     (
-                        POSITION(
-                            trim(regexp_replace(
-                                regexp_replace(
-                                    regexp_replace(
-                                        regexp_replace(
-                                            regexp_replace(lower(sk.name), '\\mpt\\.?\\M', ' ', 'g'),
-                                            '\\(\\s*persero\\s*\\)',
-                                            ' ',
-                                            'g'
-                                        ),
-                                        '\\mtbk\\M\\.?',
-                                        ' ',
-                                        'g'
-                                    ),
-                                    '[^[:alnum:]]+',
-                                    ' ',
-                                    'g'
-                                ),
-                                '\\s+',
-                                    ' ',
-                                    'g'
-                            ))
-                            IN
-                            trim(regexp_replace(
-                                regexp_replace(
-                                    regexp_replace(
-                                        regexp_replace(
-                                            regexp_replace(lower(c.original_content), '\\mpt\\.?\\M', ' ', 'g'),
-                                            '\\(\\s*persero\\s*\\)',
-                                            ' ',
-                                            'g'
-                                        ),
-                                        '\\mtbk\\M\\.?',
-                                        ' ',
-                                        'g'
-                                    ),
-                                    '[^[:alnum:]]+',
-                                    ' ',
-                                    'g'
-                                ),
-                                '\\s+',
-                                ' ',
-                                'g'
-                            ))
-                        ) > 0
+                        lower(c.original_content) LIKE ('%' || lower(sk.pure_name) || '%')
                     )
                     OR (
                         c.original_content !~ ('[A-Z\\s]{0,50}\\m' || ta.tag || '\\M[A-Z\\s]{0,50}')
