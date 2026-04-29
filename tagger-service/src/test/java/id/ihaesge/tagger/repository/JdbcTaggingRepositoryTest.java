@@ -7,25 +7,24 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class JdbcTaggingRepositoryTest {
 
     @Test
-    void contentCandidatesQueryMatchesOnlyUppercaseFourLetterTags() {
+    void contentCandidatesQueryUsesWholeWordTickerMatching() {
         String sql = JdbcTaggingRepository.QUERY_CONTENT_CANDIDATES;
 
-        assertTrue(sql.contains("ta.tag ~ '^[A-Z]{4}$'"));
+        assertTrue(sql.contains("c.original_content ~ ('\\\\m' || sk.ticker || '\\\\M')"));
     }
 
     @Test
-    void contentCandidatesQueryUsesCaseSensitiveWholeWordTickerMatching() {
+    void contentCandidatesQueryAllowsCompanyNameMatchCaseInsensitively() {
         String sql = JdbcTaggingRepository.QUERY_CONTENT_CANDIDATES;
 
-        assertTrue(sql.contains("c.original_content ~ ('\\\\m' || ta.tag || '\\\\M')"));
+        assertTrue(sql.contains("c.original_content ILIKE ('%' || sk.pure_name || '%')"));
     }
 
     @Test
-    void contentCandidatesQueryRequiresCompanyNameOrMixedCaseContext() {
+    void contentCandidatesQueryRejectsTickerInsideLongUppercaseSentences() {
         String sql = JdbcTaggingRepository.QUERY_CONTENT_CANDIDATES;
 
-        assertTrue(sql.contains("JOIN stock sk ON sk.ticker = ta.tag"));
-        assertTrue(sql.contains("lower(c.original_content) LIKE ('%' || lower(sk.pure_name) || '%')"));
-        assertTrue(sql.contains("c.original_content !~ ('[A-Z\\\\s]{0,50}\\\\m' || ta.tag || '\\\\M[A-Z\\\\s]{0,50}')"));
+        assertTrue(sql.contains("\\\\m[A-Z]{2,}(\\\\s+[A-Z]{2,}){2,}\\\\s+"));
+        assertTrue(sql.contains("\\\\s+[A-Z]{2,}(\\\\s+[A-Z]{2,}){2,}\\\\M"));
     }
 }
