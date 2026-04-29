@@ -39,7 +39,7 @@ public class JdbcTaggingRepository implements TaggingRepository {
             """ + BASE_FILTER;
 
     static final String QUERY_CONTENT_CANDIDATES = """
-            SELECT DISTINCT c.id AS content_id, ta.tag, ta.alias
+            SELECT c.id AS content_id, ta.tag, MIN(ta.alias) AS alias
             FROM content c
             JOIN source s ON s.id = c.source
             JOIN attribute st ON st.id = c.status
@@ -54,14 +54,7 @@ public class JdbcTaggingRepository implements TaggingRepository {
               AND st.type = 'CONTENT_STATUS'
               AND st.code = 'PENDING'
               AND LENGTH(trim(ta.alias)) > 1
-              AND (
-                    (
-                        lower(c.original_content) LIKE ('%' || lower(sk.pure_name) || '%')
-                    )
-                    OR (
-                        c.original_content !~ ('[A-Z\\s]{0,50}\\m' || ta.tag || '\\M[A-Z\\s]{0,50}')
-                    )
-              )
+            GROUP BY c.id, ta.tag
             """;
 //    AND lower(trim(ta.alias)) NOT IN ('bank')
 
