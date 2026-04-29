@@ -62,6 +62,16 @@ public class ContentTaggerEngine {
                         .filter(ticker -> ticker != null && !ticker.isBlank())
                         .collect(Collectors.toCollection(LinkedHashSet::new));
 
+                if (distinctTickers.isEmpty() && !effectiveCandidates.isEmpty()) {
+                    Set<String> rawTickers = effectiveCandidates.stream()
+                            .map(TagCandidate::ticker)
+                            .collect(Collectors.toCollection(LinkedHashSet::new));
+                    System.out.println("[TAGGER][EMPTY_TICKERS] contentId=" + contentId
+                            + " candidates=" + effectiveCandidates.size()
+                            + " rawTickers=" + rawTickers
+                            + " url=" + content.url());
+                }
+
                 if (distinctTickers.size() > 5) {
                     taggingRepository.updateContentStatus(contentId, STATUS_MULTIPLE_STOCKS);
                     multipleStocksContent.add(content);
