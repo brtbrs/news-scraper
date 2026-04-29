@@ -39,22 +39,27 @@ public class JdbcTaggingRepository implements TaggingRepository {
             """ + BASE_FILTER;
 
     static final String QUERY_CONTENT_CANDIDATES = """
-            SELECT c.id AS content_id, ta.tag, MIN(ta.alias) AS alias
+            SELECT c.id AS content_id, sk.ticker as tag
             FROM content c
             JOIN source s ON s.id = c.source
             JOIN attribute st ON st.id = c.status
-            JOIN tag_alias ta ON (
-                ta.tag ~ '^[A-Z]{4}$'
-                AND c.original_content ~ ('\\m' || ta.tag || '\\M')
+            JOIN stock sk ON (
+                c.original_content ~ ('\\m' || sk.ticker || '\\M')
+                AND (
+			        (
+			            c.original_content LIKE ('%' || sk.pure_name || '%')
+			        )
+			        OR (
+			            c.original_content !~ ('[A-Z\\s]{0,50}\\m' || sk.ticker || '\\M[A-Z\\s]{0,50}')
+			        )
+			    )
             )
-            JOIN stock sk ON sk.ticker = ta.tag
             WHERE s.name = ?
               AND c.original_publish_date >= ?
               AND c.original_publish_date <= ?
               AND st.type = 'CONTENT_STATUS'
               AND st.code = 'PENDING'
-              AND LENGTH(trim(ta.alias)) > 1
-            GROUP BY c.id, ta.tag
+            GROUP BY c.id, sk.ticker
             """;
 //    AND lower(trim(ta.alias)) NOT IN ('bank')
 
@@ -188,15 +193,15 @@ public class JdbcTaggingRepository implements TaggingRepository {
         List<TagCandidate> candidates = new ArrayList<>();
         try (ResultSet rs = stmt.executeQuery()) {
             while (rs.next()) {
-                String alias = rs.getString("alias");
+//                String alias = rs.getString("alias");
 //                if (alias == null || alias.isBlank() || GENERIC_ALIASES.contains(alias.trim().toLowerCase())) {
-                if (alias == null || alias.isBlank()) {
-                    continue;
-                }
+//                if (alias == null || alias.isBlank()) {
+//                    continue;
+//                }
                 candidates.add(new TagCandidate(
                         rs.getObject("content_id", UUID.class),
-                        rs.getString("tag"),
-                        alias
+                        rs.getString("tag")
+//                        alias
                 ));
             }
         }
