@@ -46,13 +46,17 @@ public class JdbcTaggingRepository implements TaggingRepository {
             JOIN stock sk ON (
                 c.original_content ~ ('\\m' || sk.ticker || '\\M')
                 AND (
-			        (
-			            c.original_content LIKE ('%' || sk.pure_name || '%')
-			        )
-			        OR (
-			            c.original_content !~ ('[A-Z\\s]{0,50}\\m' || sk.ticker || '\\M[A-Z\\s]{0,50}')
-			        )
-			    )
+                    (
+                        c.original_content ILIKE ('%' || sk.pure_name || '%')
+                    )
+                    OR (
+                        c.original_content !~ (
+                            '\\m[A-Z]{2,}(\\s+[A-Z]{2,}){2,}\\s+'
+                            || sk.ticker ||
+                            '\\s+[A-Z]{2,}(\\s+[A-Z]{2,}){2,}\\M'
+                        )
+                    )
+                )
             )
             WHERE s.name = ?
               AND c.original_publish_date >= ?
