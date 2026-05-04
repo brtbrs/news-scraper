@@ -62,27 +62,18 @@ public class ContentTaggerEngine {
                         .filter(ticker -> ticker != null && !ticker.isBlank())
                         .collect(Collectors.toCollection(LinkedHashSet::new));
 
-                System.out.println("===== content url = " + content.url());
-                StringBuffer sbtc = new StringBuffer();
-                for (TagCandidate tc : effectiveCandidates) {
-                	sbtc.append(tc.ticker() + ", ");
-                }
-                System.out.println("*** effectiveCandidates = " + effectiveCandidates.size() + " = " + sbtc.toString());
-
-                StringBuffer sbdt = new StringBuffer();
-                for (String dt : distinctTickers) {
-                	sbtc.append(dt + ", ");
-                }
-                System.out.println("*** distinctTickers = " + distinctTickers.size() + " = " + sbdt.toString());
-//                if (distinctTickers.isEmpty() && !effectiveCandidates.isEmpty()) {
-//                    Set<String> rawTickers = effectiveCandidates.stream()
-//                            .map(TagCandidate::ticker)
-//                            .collect(Collectors.toCollection(LinkedHashSet::new));
-//                    System.out.println("[TAGGER][EMPTY_TICKERS] contentId=" + contentId
-//                            + " candidates=" + effectiveCandidates.size()
-//                            + " rawTickers=" + rawTickers
-//                            + " url=" + content.url());
+//                System.out.println("===== content url = " + content.url());
+//                StringBuffer sbtc = new StringBuffer();
+//                for (TagCandidate tc : effectiveCandidates) {
+//                	sbtc.append(tc.ticker() + ", ");
 //                }
+//                System.out.println("*** effectiveCandidates = " + effectiveCandidates.size() + " = " + sbtc.toString());
+
+//                StringBuffer sbdt = new StringBuffer();
+//                for (String dt : distinctTickers) {
+//                	sbtc.append(dt + ", ");
+//                }
+//                System.out.println("*** distinctTickers = " + distinctTickers.size() + " = " + sbdt.toString());
 
                 if (distinctTickers.size() > 5) {
                     taggingRepository.updateContentStatus(contentId, STATUS_MULTIPLE_STOCKS);
@@ -106,6 +97,7 @@ public class ContentTaggerEngine {
             if (pipelineLogId != null) {
                 taggingRepository.updatePipelineLog(
                         pipelineLogId,
+                        pendingContents.size(),
                         taggedContent.size(),
                         untaggedContent.size(),
                         multipleStocksContent.size(),
@@ -120,21 +112,21 @@ public class ContentTaggerEngine {
             int totalPending = pendingContents.size();
             double percentage = totalPending == 0 ? 0 : (double) taggedContent.size() / totalPending * 100;
         	System.out.println("=== TAGGED contents : " + taggedContent.size() + " = " + df.format(percentage) + "%");
-        	for (Content content : taggedContent) {
-        		System.out.println(content.url());
-        	}
+//        	for (Content content : taggedContent) {
+//        		System.out.println(content.url());
+//        	}
 
         	percentage = totalPending == 0 ? 0 : (double) untaggedContent.size() / totalPending * 100;
     		System.out.println("=== unTAGGED contents : " + untaggedContent.size() + " = " + df.format(percentage) + "%");
-        	for (Content content : untaggedContent) {
-        		System.out.println(content.url());
-        	}
+//        	for (Content content : untaggedContent) {
+//        		System.out.println(content.url());
+//        	}
 
         	percentage = totalPending == 0 ? 0 : (double) multipleStocksContent.size() / totalPending * 100;
     		System.out.println("=== multiple TAGS contents : " + multipleStocksContent.size() + " = " + df.format(percentage) + "%");
-        	for (Content content : multipleStocksContent) {
-        		System.out.println(content.url());
-        	}
+//        	for (Content content : multipleStocksContent) {
+//        		System.out.println(content.url());
+//        	}
 
             System.out.println("\n***** STOP TAGGING " + source + " *****");
         }

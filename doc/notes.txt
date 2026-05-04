@@ -33,7 +33,6 @@ WHERE s.name = 'STOCKWATCH' AND
 		c.original_publish_date >= '2026-01-03' AND c.original_publish_date <= '2026-01-04'
 )
 
-
 5. and then to update content status back to 'PENDING'
 UPDATE content SET status = (SELECT id FROM attribute WHERE type = 'CONTENT_STATUS' AND code = 'PENDING')
 WHERE id IN (

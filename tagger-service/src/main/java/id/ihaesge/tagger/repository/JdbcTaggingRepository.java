@@ -44,19 +44,8 @@ public class JdbcTaggingRepository implements TaggingRepository {
             JOIN source s ON s.id = c.source
             JOIN attribute st ON st.id = c.status
             JOIN stock sk ON (
-                c.original_content ~ ('\\m' || sk.ticker || '\\M')
-                AND (
-                    (
-                        c.original_content ILIKE ('%' || sk.pure_name || '%')
-                    )
-                    OR (
-                        c.original_content !~ (
-                            '\\m[A-Z]{2,}(\\s+[A-Z]{2,}){2,}\\s+'
-                            || sk.ticker ||
-                            '\\s+[A-Z]{2,}(\\s+[A-Z]{2,}){2,}\\M'
-                        )
-                    )
-                )
+                c.original_content ~ ('\\m' || sk.ticker || '\\M') AND 
+                c.original_content ILIKE ('%' || sk.pure_name || '%')
             )
             WHERE s.name = ?
               AND c.original_publish_date >= ?
@@ -90,7 +79,8 @@ public class JdbcTaggingRepository implements TaggingRepository {
             """;
     private static final String UPDATE_PIPELINE_LOG = """
             UPDATE pipeline_log
-            SET total_tagged = ?,
+            SET total_found = ?,
+            	total_tagged = ?,
                 total_untagged = ?,
                 total_multiple = ?,
                 end_at = ?
@@ -180,13 +170,14 @@ public class JdbcTaggingRepository implements TaggingRepository {
     }
 
     @Override
-    public void updatePipelineLog(UUID pipelineLogId, int totalTagged, int totalUntagged, int totalMultiple, Timestamp endAt) {
+    public void updatePipelineLog(UUID pipelineLogId, int totalFound, int totalTagged, int totalUntagged, int totalMultiple, Timestamp endAt) {
         try (PreparedStatement stmt = connection.prepareStatement(UPDATE_PIPELINE_LOG)) {
-            stmt.setInt(1, totalTagged);
-            stmt.setInt(2, totalUntagged);
-            stmt.setInt(3, totalMultiple);
-            stmt.setTimestamp(4, endAt);
-            stmt.setObject(5, pipelineLogId);
+        	stmt.setInt(1, totalFound);
+        	stmt.setInt(2, totalTagged);
+            stmt.setInt(3, totalUntagged);
+            stmt.setInt(4, totalMultiple);
+            stmt.setTimestamp(5, endAt);
+            stmt.setObject(6, pipelineLogId);
             stmt.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException("Failed to update pipeline log", e);

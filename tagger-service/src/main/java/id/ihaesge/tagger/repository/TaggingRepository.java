@@ -14,5 +14,5 @@ public interface TaggingRepository {
     void saveContentTags(UUID contentId, Set<String> tickers);
     void updateContentStatus(UUID contentId, String statusCode);
     UUID createPipelineLog(String source, String pipeline, Timestamp startAt);
-    void updatePipelineLog(UUID pipelineLogId, int totalTagged, int totalUntagged, int totalMultiple, Timestamp endAt);
+    void updatePipelineLog(UUID pipelineLogId, int totalFound, int totalTagged, int totalUntagged, int totalMultiple, Timestamp endAt);
 }

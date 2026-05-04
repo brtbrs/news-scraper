@@ -56,7 +56,7 @@ From repository root:
 
 ```bash
 mvn -pl scraper-service compile
-API_BASE_URL=http://localhost:8080/api mvn -pl scraper-service exec:java -Dexec.args="--limit=5 --source=ALL --from=WEBSITE"
+API_BASE_URL=http://localhost:8080/api mvn -pl scraper-service exec:java -Dexec.args="--limit=0 --source=ALL --from=WEBSITE"
 API_BASE_URL=http://localhost:8080/api mvn -pl scraper-service exec:java -Dexec.args="--limit=5 --source=STOCKWATCH --from=SITEMAP"
 ```
 

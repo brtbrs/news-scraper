@@ -24,6 +24,10 @@ Thumbs.db
 
 # Database
 postgres_data/
+n8n_storage/
+redis_storage/
+open-webui/
+ollama/
 
 # Compressed files
 *.zip
@@ -40,8 +44,6 @@ logs/
 *.log
 
 # Docker
-docker-data/
-postgres_data/
 *.pid
 
 # Temporary files
