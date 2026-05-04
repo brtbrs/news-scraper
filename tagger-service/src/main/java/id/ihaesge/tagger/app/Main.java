@@ -18,9 +18,9 @@ public class Main {
         LocalDate fromDate = LocalDate.parse(readRequiredArg(args, "--from="));		//yyyy-mm-dd
         LocalDate toDate = LocalDate.parse(readRequiredArg(args, "--to="));			//yyyy-mm-dd
 
-        String jdbcUrl = readConfig("TAGGER_DB_URL", "jdbc:postgresql://localhost:5432/newsdibi");
-        String jdbcUser = readConfig("TAGGER_DB_USER", "tagger");
-        String jdbcPassword = readConfig("TAGGER_DB_PASSWORD", "tagger");
+        String jdbcUrl = readConfig("TAGGER_DB_URL", "");
+        String jdbcUser = readConfig("TAGGER_DB_USER", "");
+        String jdbcPassword = readConfig("TAGGER_DB_PASSWORD", "");
         ZoneId taggingZone = ZoneId.of(readConfig("TAGGER_TIMEZONE", DEFAULT_TAGGER_TIMEZONE));
 
         Instant from = fromDate.atStartOfDay(taggingZone).toInstant();

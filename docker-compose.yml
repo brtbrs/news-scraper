@@ -5,9 +5,9 @@ x-shared: &shared
     - DB_TYPE=postgresdb
     - DB_POSTGRESDB_HOST=postgres
     - DB_POSTGRESDB_PORT=5432
-    - DB_POSTGRESDB_DATABASE=${POSTGRES_DB_N8N}
-    - DB_POSTGRESDB_USER=${POSTGRES_NON_ROOT_USER}
-    - DB_POSTGRESDB_PASSWORD=${POSTGRES_NON_ROOT_PASSWORD}
+    - DB_POSTGRESDB_DATABASE=${POSTGRES_DB_NEWS}
+    - DB_POSTGRESDB_USER=${POSTGRES_USER_N8N}
+    - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD_N8N}
     - EXECUTIONS_MODE=queue
     - QUEUE_BULL_REDIS_HOST=redis
     - QUEUE_HEALTH_CHECK_ACTIVE=true
@@ -38,17 +38,14 @@ services:
     container_name: postgres
     hostname: postgres
     environment:
-      - POSTGRES_DB=${POSTGRES_DB_NEWS:-newsdibi}
-      - POSTGRES_USER=${POSTGRES_USER:-postgres}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
-      - API_DB_USER=${API_DB_USER:-api_service_user}
-      - API_DB_PASSWORD=${API_DB_PASSWORD:-change_me_api_service}
+      - POSTGRES_DB=${POSTGRES_DB_NEWS}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - TZ=Asia/Jakarta
     ports:
-      - "5432:5432"
+      - 5432:5432
     volumes:
-      - "./postgres_data:/var/lib/postgresql/data:rw"
-      - "./db:/docker-entrypoint-initdb.d:ro"
+      - ./postgres_data:/var/lib/postgresql/data:rw
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -h localhost -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-newsdibi}"]
       interval: 10s
@@ -104,3 +101,23 @@ services:
       - N8N_RUNNERS_TASK_BROKER_URI=http://n8n-worker:5679
     depends_on:
       - n8n-worker
+
+  newsapi-service:
+    build:
+      context: .
+      dockerfile: api-service/Dockerfile
+    container_name: newsapi-service
+    hostname: newsapi-service
+    restart: unless-stopped
+    environment:
+      - SERVER_PORT=8080
+      - DB_URL=${POSTGRES_JDBC_DB_URL}
+      - DB_USER=${API_DB_USER}
+      - DB_PASSWORD=${API_DB_PASSWORD}
+      - JPA_DDL_AUTO=validate
+      - TZ=Asia/Jakarta
+    ports:
+      - 8080:8080
+    depends_on:
+      postgres:
+        condition: service_healthy
