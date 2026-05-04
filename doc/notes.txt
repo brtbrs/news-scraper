@@ -93,4 +93,9 @@ join attribute a on c.status = a.id
 left join content_tag ct on  c.id = ct.content
 where s.name = 'STOCKWATCH' and c.url = 'https://stockwatch.id/skeptisisme-damai-iran-meningkat-harga-minyak-brent-kembali-tembus-usd-100/'
 
+10. postgresql users:
+a. scraper-service : scraper
+b. tagger-service : tagger
+
+ 
 
