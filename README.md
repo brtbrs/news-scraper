@@ -28,6 +28,12 @@ API base URL:
 
 > Note: this path is convenient for full-stack/local integration, but code changes in `api-service` require rebuilding the image.
 
+
+Database security note for `api-service`:
+- By default, `api-service` now uses a dedicated database login (`api_service_user`) with limited privileges (no role creation, no schema ownership changes).
+- Configure credentials with `API_DB_USER` and `API_DB_PASSWORD` (or `DB_USER` / `DB_PASSWORD` for Spring override).
+- The role is created from `db/01-api-service-user.sql` during first PostgreSQL initialization; if `postgres_data` already exists, recreate it to apply initialization scripts.
+
 Stop services:
 
 ```bash

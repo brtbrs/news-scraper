@@ -41,11 +41,14 @@ services:
       - POSTGRES_DB=${POSTGRES_DB_NEWS:-newsdibi}
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - API_DB_USER=${API_DB_USER:-api_service_user}
+      - API_DB_PASSWORD=${API_DB_PASSWORD:-change_me_api_service}
       - TZ=Asia/Jakarta
     ports:
       - "5432:5432"
     volumes:
       - "./postgres_data:/var/lib/postgresql/data:rw"
+      - "./db:/docker-entrypoint-initdb.d:ro"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -h localhost -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-newsdibi}"]
       interval: 10s
