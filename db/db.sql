@@ -7,10 +7,13 @@
 -- 5) index commonly queried FK columns and timestamps
 -- 6) add NOT BLANK-like checks for critical text columns
 
+-- docker exec -it postgres sh
+-- psql -h localhost -p 5432 -U postgres -d newsdibi
+
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 CREATE EXTENSION IF NOT EXISTS vector;
 
-
+-- then only run these ddl via dbeaver
 CREATE TABLE attribute (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     type VARCHAR(100) NOT NULL,
@@ -289,7 +292,7 @@ $$;
 -- GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO nusern;
 
 
--- Service DB roles (scraper-service and tagger-service)
+-- create roles and its ACLs, pwd is erased for security reason
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'scraper') THEN
@@ -304,35 +307,62 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'nusern') THEN
         CREATE ROLE nusern LOGIN PASSWORD 'npwdn';
     END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'openuserclaw') THEN
+        CREATE ROLE openuserclaw LOGIN PASSWORD '';
+    END IF;
 END
 $$;
 
 GRANT CONNECT ON DATABASE newsdibi TO scraper;
 GRANT CONNECT ON DATABASE newsdibi TO tagger;
 GRANT CONNECT ON DATABASE newsdibi TO nusern;
+GRANT CONNECT ON DATABASE newsdibi TO openuserclaw;
 GRANT CONNECT ON DATABASE newsdibi TO apiservice;
 
 GRANT USAGE ON SCHEMA public TO scraper;
 GRANT USAGE ON SCHEMA public TO tagger;
 GRANT USAGE ON SCHEMA public TO nusern;
+GRANT USAGE ON SCHEMA public TO openuserclaw;
 GRANT USAGE ON SCHEMA public TO apiservice;
 
 GRANT SELECT, INSERT, UPDATE ON ALL TABLES IN SCHEMA public TO scraper;
 GRANT SELECT, INSERT, UPDATE ON ALL TABLES IN SCHEMA public TO tagger;
 GRANT SELECT, INSERT, UPDATE ON ALL TABLES IN SCHEMA public TO nusern;
+GRANT SELECT, INSERT, UPDATE ON ALL TABLES IN SCHEMA public TO openuserclaw;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO apiservice;
 
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO scraper;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO tagger;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO nusern;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO openuserclaw;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO apiservice;
 
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE ON TABLES TO scraper;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE ON TABLES TO tagger;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE ON TABLES TO nusern;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE ON TABLES TO openuserclaw;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO apiservice;
 
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO scraper;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO tagger;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO nusern;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO openuserclaw;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO apiservice;
+
+CREATE DATABASE n8ndibi OWNER nusern;
+CREATE DATABASE openclawdibi OWNER openuserclaw;
+
+-- docker exec -it postgres sh
+-- psql -h localhost -p 5432 -U postgres -d openclawdibi
+
+CREATE EXTENSION IF NOT EXISTS vector;
+
+-- then only run these ddl via dbeaver
+CREATE TABLE openclaw_memory_documents (
+  id UUID PRIMARY KEY,
+  content TEXT,
+  embedding vector(1536), -- Assuming OpenAI/similar 1536 dim
+  tsv tsvector -- For BM25 full-text search
+);
+CREATE INDEX ON openclaw_memory_documents USING ivfflat (embedding vector_cosine_ops);
+CREATE INDEX ON openclaw_memory_documents USING gin (tsv);

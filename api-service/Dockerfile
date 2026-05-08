@@ -5,6 +5,7 @@ WORKDIR /build
 COPY pom.xml .
 COPY api-service/pom.xml api-service/pom.xml
 COPY scraper-service/pom.xml scraper-service/pom.xml
+COPY tagger-service/pom.xml tagger-service/pom.xml
 RUN mvn -pl api-service -am -DskipTests dependency:go-offline
 
 # then copy source
