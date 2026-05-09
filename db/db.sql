@@ -120,18 +120,20 @@ CREATE TABLE content (
 
 CREATE TABLE content_ai (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    content UUID NOT NULL UNIQUE,
     title_id TEXT,
     title_en TEXT,
     content_id TEXT,
     content_en TEXT,
     sentiment UUID,
-    duplicate UUID,
     publish_date TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT fk_content_ai_content FOREIGN KEY (content) REFERENCES content (id) ON DELETE CASCADE,
-    CONSTRAINT fk_content_ai_sentiment FOREIGN KEY (sentiment) REFERENCES attribute (id) ON DELETE RESTRICT,
-    CONSTRAINT fk_content_ai_duplicate FOREIGN KEY (duplicate) REFERENCES content (id) ON DELETE SET NULL
+    CONSTRAINT fk_content_ai_sentiment FOREIGN KEY (sentiment) REFERENCES attribute (id) ON DELETE RESTRICT
+);
+
+CREATE TABLE content_ai_source (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    content UUID NOT NULL UNIQUE,
+    CONSTRAINT fk_content_ai_source_content FOREIGN KEY (content) REFERENCES content (id) ON DELETE CASCADE
 );
 
 CREATE TABLE content_tag (
@@ -201,7 +203,7 @@ CREATE TABLE activity_log (
 
 CREATE TABLE pipeline_log (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    source UUID NOT NULL,
+    source UUID,
     pipeline VARCHAR(20),
     total_found INTEGER,
     total_saved INTEGER,
@@ -209,8 +211,7 @@ CREATE TABLE pipeline_log (
     total_untagged INTEGER,
     total_multiple INTEGER,
     start_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    end_at TIMESTAMPTZ,
-    CONSTRAINT fk_pipeline_log_source FOREIGN KEY (source) REFERENCES source (id) ON DELETE CASCADE
+    end_at TIMESTAMPTZ
 );
 
 CREATE INDEX idx_stock_industry ON stock (industry);

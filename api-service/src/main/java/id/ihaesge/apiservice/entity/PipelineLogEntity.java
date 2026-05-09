@@ -11,7 +11,7 @@ import java.util.UUID;
 public class PipelineLogEntity {
     @Id @GeneratedValue @UuidGenerator
     private UUID id;
-    @ManyToOne(fetch = FetchType.EAGER, optional = false) @JoinColumn(name = "source", nullable = false)
+    @ManyToOne(fetch = FetchType.EAGER) @JoinColumn(name = "source")
     private SourceEntity source;
     @Column(name = "total_found")
     private Integer totalFound;
