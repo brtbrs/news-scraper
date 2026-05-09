@@ -55,6 +55,9 @@ public class PipelineLogService {
     }
 
     private SourceEntity resolveSource(String sourceName) {
+        if (sourceName == null || sourceName.isBlank()) {
+            return null;
+        }
         return sourceRepository.findByNameIgnoreCase(sourceName)
                 .orElseGet(() -> {
                     SourceEntity source = new SourceEntity();
@@ -76,7 +79,10 @@ public class PipelineLogService {
             return null;
         }
         String normalized = pipeline.trim().toUpperCase(Locale.ROOT);
-        if (!normalized.equals("SCRAPER") && !normalized.equals("TAGGER")) {
+        if (!normalized.equals("SCRAPER")
+                && !normalized.equals("TAGGER")
+                && !normalized.equals("SUMMARIZER")
+                && !normalized.equals("TRANSLATOR")) {
             throw new IllegalArgumentException("Unsupported pipeline: " + pipeline);
         }
         return normalized;
@@ -89,7 +95,7 @@ public class PipelineLogService {
     private PipelineLogResponse toResponse(PipelineLogEntity entity) {
         return new PipelineLogResponse(
                 entity.getId(),
-                entity.getSource().getName(),
+                entity.getSource() != null ? entity.getSource().getName() : null,
                 entity.getPipeline(),
                 entity.getTotalFound(),
                 entity.getTotalSaved(),

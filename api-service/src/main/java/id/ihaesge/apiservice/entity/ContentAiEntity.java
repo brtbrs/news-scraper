@@ -22,10 +22,6 @@ public class ContentAiEntity {
     @UuidGenerator
     private UUID id;
 
-    @OneToOne(fetch = FetchType.EAGER, optional = false)
-    @JoinColumn(name = "content", nullable = false, unique = true)
-    private ContentEntity content;
-
     @Column(name = "title_id", columnDefinition = "TEXT")
     private String titleId;
 
@@ -42,10 +38,6 @@ public class ContentAiEntity {
     @JoinColumn(name = "sentiment")
     private AttributeEntity sentiment;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "duplicate")
-    private ContentEntity duplicate;
-
     @Column(name = "publish_date")
     private Instant publishDate;
 
@@ -54,9 +46,6 @@ public class ContentAiEntity {
 
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
-
-    public ContentEntity getContent() { return content; }
-    public void setContent(ContentEntity content) { this.content = content; }
 
     public String getTitleId() { return titleId; }
     public void setTitleId(String titleId) { this.titleId = titleId; }
@@ -72,9 +61,6 @@ public class ContentAiEntity {
 
     public AttributeEntity getSentiment() { return sentiment; }
     public void setSentiment(AttributeEntity sentiment) { this.sentiment = sentiment; }
-
-    public ContentEntity getDuplicate() { return duplicate; }
-    public void setDuplicate(ContentEntity duplicate) { this.duplicate = duplicate; }
 
     public Instant getPublishDate() { return publishDate; }
     public void setPublishDate(Instant publishDate) { this.publishDate = publishDate; }
