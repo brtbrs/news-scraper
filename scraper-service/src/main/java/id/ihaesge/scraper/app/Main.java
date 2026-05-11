@@ -15,6 +15,7 @@ public class Main {
 	private static String EMITENTRUST = "EMITENTRUST";
 	private static String INVESTOR = "INVESTOR";
 	private static String IPOTNEWS = "IPOTNEWS";
+	private static String IQPLUS = "IQPLUS";
 	private static String KABARBURSA = "KABARBURSA";
 	private static String KATADATA = "KATADATA";
 	private static String KONTAN = "KONTAN";
@@ -67,6 +68,9 @@ public class Main {
 	    	case "IPOTNEWS":
 	    		engine.registerSource(new IPOTNews());
 	    		break;
+	    	case "IQPLUS":
+	    		engine.registerSource(new IQPlus());
+	    		break;
 	    	case "KABARBURSA":
 	    		engine.registerSource(new KabarBursa());
 	    		break;
@@ -89,6 +93,7 @@ public class Main {
 	    		engine.registerSource(new EmitenTrust());		//sitemap is halfway done
 	    		engine.registerSource(new Investor());			//sitemap is done
 	    		engine.registerSource(new IPOTNews());			//no sitemap
+	    		engine.registerSource(new IQPlus());			//no sitemap but have old pages until 11/11/2025
 	    		engine.registerSource(new KabarBursa());		//sitemap is halfway done 
 	    		engine.registerSource(new KataData());			//sitemap is done
 	    		engine.registerSource(new Kontan());			//no sitemap
