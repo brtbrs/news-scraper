@@ -5161,6 +5161,7 @@ INSERT INTO source (name, url) VALUES ('EMITENNEWS', 'https://www.emitennews.com
 INSERT INTO source (name, url) VALUES ('EMITENTRUST', 'https://emitentrust.com/') ON CONFLICT DO NOTHING;
 INSERT INTO source (name, url) VALUES ('INVESTOR', 'https://investor.id/market/') ON CONFLICT DO NOTHING;
 INSERT INTO source (name, url) VALUES ('IPOTNEWS', 'https://www.ipotnews.com/ipotnews/') ON CONFLICT DO NOTHING;
+INSERT INTO source (name, url) VALUES ('IQPLUS', 'https://www.iqplus.info/news/stock_news/') ON CONFLICT DO NOTHING;
 INSERT INTO source (name, url) VALUES ('KABARBURSA', 'https://www.kabarbursa.com/market-hari-ini/') ON CONFLICT DO NOTHING;
 INSERT INTO source (name, url) VALUES ('KATADATA', 'https://katadata.co.id/finansial/bursa/') ON CONFLICT DO NOTHING;
 INSERT INTO source (name, url) VALUES ('KONTAN', 'https://investasi.kontan.co.id/') ON CONFLICT DO NOTHING;

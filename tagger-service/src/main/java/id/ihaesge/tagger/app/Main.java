@@ -18,7 +18,7 @@ public class Main {
         LocalDate fromDate = LocalDate.parse(readRequiredArg(args, "--from="));		//yyyy-mm-dd
         LocalDate toDate = LocalDate.parse(readRequiredArg(args, "--to="));			//yyyy-mm-dd
 
-        String jdbcUrl = readConfig("TAGGER_DB_URL", "");
+        String jdbcUrl = readConfig("POSTGRES_JDBC_DB_URL", "");
         String jdbcUser = readConfig("TAGGER_DB_USER", "");
         String jdbcPassword = readConfig("TAGGER_DB_PASSWORD", "");
         ZoneId taggingZone = ZoneId.of(readConfig("TAGGER_TIMEZONE", DEFAULT_TAGGER_TIMEZONE));

@@ -77,7 +77,7 @@ From repository root:
 
 ```bash
 mvn -pl tagger-service compile
-TAGGER_TIMEZONE=Asia/Jakarta API_BASE_URL=http://localhost:8080/api mvn -pl tagger-service exec:java -Dexec.mainClass=id.ihaesge.tagger.app.Main -Dexec.args="--source=BISNIS --from=2026-04-01 --to=2026-04-15"
+TAGGER_TIMEZONE=Asia/Jakarta API_BASE_URL=http://localhost:8080/api mvn -pl tagger-service exec:java -Dexec.mainClass=id.ihaesge.tagger.app.Main -Dexec.args="--source=BISNIS --from=2026-04-01 --to=2026-04-26"
 ```
 
 ## 5) Run scraper as cron job
